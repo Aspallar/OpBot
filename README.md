@@ -32,7 +32,7 @@ MM
 
 #### Examples:
 @OpBot create KP 8 Fri  
-@OpNot create rav 16 Thu 16:00 VM
+@OpBot create rav 16 Thu 16:00 VM
 
 ## Signup yourself
 @OpBot \<primary role>

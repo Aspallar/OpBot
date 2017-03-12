@@ -74,5 +74,6 @@ To change your role just signup again with the new role.
 * Allow alternate roles to be specified.  
 * Allow editing of operation details (changing the time, mode etc)  
 * Allow specifying a date more than 7 days ahead. 
+* Allow more than one operation to be active
 * Other stuff \:P
  

@@ -70,9 +70,9 @@ To change your role just signup again with the new role.
 @OpBot addnote \<The text of the note>
 
 ## Display Group Finder Operations
-@OpBot gf [<days>]
+@OpBot gf [\<days>]
 
-where <days> is the numbver of days to display, defaults to 7
+where \<days> is the numbver of days to display, defaults to 7
 
 ## Features to be added in a later version
 

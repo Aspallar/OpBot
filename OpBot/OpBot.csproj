@@ -61,7 +61,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CodeHolder.cs" />
     <Compile Include="CommandProcessorConfig.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="DateHelper.cs" />

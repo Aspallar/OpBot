@@ -17,7 +17,7 @@ DF  The Dread Fortress
 DP  The Dread Palace  
 RAV The Ravagers  
 TOS Temple of Sacrifice  
-GF  Group Finder  
+GF  Group Finder (will 
 
 \<size> is 8 or 16
 
@@ -68,6 +68,11 @@ To change your role just signup again with the new role.
 
 ## Add a note
 @OpBot addnote \<The text of the note>
+
+## Display Group Finder Operations
+@OpBot gf [<days>]
+
+where <days> is the numbver of days to display, defaults to 7
 
 ## Features to be added in a later version
 

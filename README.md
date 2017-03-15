@@ -8,16 +8,17 @@ Parameters enclosed in square brackets [] are optional.
 @OpBot create \<op> \<size> \<day> [\<time>] [\<mode>]
 
 \<op> is one of  
-EV  Eternity Vault  
-KP  Karagga's Palace  
-EC  Explosive Conflict  
-TFB Terror From Beyond  
-SV  Scum and Villainy  
-DF  The Dread Fortress  
-DP  The Dread Palace  
-RAV The Ravagers  
-TOS Temple of Sacrifice  
-GF  Group Finder (will 
+* EV  Eternity Vault  
+* KP  Karagga's Palace  
+* EC  Explosive Conflict  
+* TFB Terror From Beyond  
+* SV  Scum and Villainy  
+* DF  The Dread Fortress  
+* DP  The Dread Palace  
+* RAV The Ravagers  
+* TOS Temple of Sacrifice  
+* GF  Group Finder (will create whatever op is in group finder on the specified day.)
+
 
 \<size> is 8 or 16
 
@@ -26,9 +27,10 @@ GF  Group Finder (will
 \<time> is the time of operation in UTC, defaults to 19:30 if omitted.
 
 \<mode> is one of (defaults to SM if omitted)  
-SM  
-VM  
-MM  
+* SM  
+* VM  
+* MM  
+
 
 #### Examples:
 @OpBot create KP 8 Fri  
@@ -38,9 +40,10 @@ MM
 @OpBot \<primary role>
 
 \<primary role> is one of  
-tank  
-dps  
-heal
+* tank  
+* dps  
+* heal
+
 
 #### Examples
 @OpBot dps  
@@ -72,13 +75,7 @@ To change your role just signup again with the new role.
 ## Display Group Finder Operations
 @OpBot gf [\<days>]
 
-where \<days> is the numbver of days to display, defaults to 7
+where \<days> is the number of days to display, defaults to 7
 
-## Features to be added in a later version
 
-* Allow alternate roles to be specified.  
-* Allow editing of operation details (changing the time, mode etc)  
-* Allow specifying a date more than 7 days ahead. 
-* Allow more than one operation to be active
-* Other stuff \:P
  

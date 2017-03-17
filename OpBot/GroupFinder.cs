@@ -27,11 +27,6 @@ namespace OpBot
             return week;
         }
 
-        public static List<string> NextWeek()
-        {
-            return NextDays(7);
-        }
-
         private static int GetOrderIndex(DateTime dt)
         {
             TimeSpan toBase = dt.Date - baseDate;

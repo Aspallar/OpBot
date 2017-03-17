@@ -45,7 +45,7 @@ namespace OpBot
             set
             {
                 if (value != 8 && value != 16)
-                    throw new OpbotInvalidValueException("Invalid size, must be 8 or 16");
+                    throw new OpBotInvalidValueException("Invalid size, must be 8 or 16");
                 _size = value;
             }
         }
@@ -59,7 +59,7 @@ namespace OpBot
             set
             {
                 if (value != "SM" && value != "VM" && value != "MM")
-                    throw new OpbotInvalidValueException($"{value} is not a valid operation mode");
+                    throw new OpBotInvalidValueException($"{value} is not a valid operation mode");
                 _mode = value;
             }
         }
@@ -68,7 +68,7 @@ namespace OpBot
         {
             int size;
             if (!int.TryParse(sizeString, out size))
-                throw new OpbotInvalidValueException("Invalid size, must be 8 or 16");
+                throw new OpBotInvalidValueException("Invalid size, must be 8 or 16");
             Size = size;
         }
 
@@ -86,7 +86,7 @@ namespace OpBot
                 case "RAV": return "The Ravagers";
                 case "TOS": return "Temple of Sacrifice";
                 default:
-                    throw new OpbotInvalidValueException($"Unknown operation name '{shortCode}'");
+                    throw new OpBotInvalidValueException($"Unknown operation name '{shortCode}'");
             }
         }
 

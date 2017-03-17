@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace OpBot
 {
-    class Program
+    internal class Program
     {
         static void Main(string[] args) => new Program().Run(args).GetAwaiter().GetResult();
 

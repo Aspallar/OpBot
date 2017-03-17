@@ -14,6 +14,7 @@ namespace OpBot
         }
 
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Maintainability", "CA1502:AvoidExcessiveComplexity")]
         public static DayOfWeek DayToDayOfWeek(string day)
         {
             switch (day.ToUpperInvariant())
@@ -42,7 +43,7 @@ namespace OpBot
                 case "SUNDAY":
                     return DayOfWeek.Sunday;
                 default:
-                    throw new OpbotInvalidValueException($"{day} is not a recognisable day name");
+                    throw new OpBotInvalidValueException($"{day} is not a recognizable day name");
             }
         }
 

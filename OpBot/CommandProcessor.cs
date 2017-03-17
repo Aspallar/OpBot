@@ -139,12 +139,16 @@ namespace OpBot
 
         private async Task RemoveCommand(MessageCreateEventArgs e, DiscordUser user)
         {
+            if (!CheckForOperation(e))
+                return;
             Operation.Remove(user.ID);
             await UpdateOperationMessage(e.Channel);
         }
 
         private async Task AddNoteCommand(MessageCreateEventArgs e, string[] commandParts)
         {
+            if (!CheckForOperation(e))
+                return;
             if (commandParts.Length > 1)
             {
                 string text = string.Join(" ", commandParts, 1, commandParts.Length - 1);
@@ -155,6 +159,8 @@ namespace OpBot
 
         private async Task SignupCommand(MessageCreateEventArgs e, string command, DiscordUser user)
         {
+            if (!CheckForOperation(e))
+                return;
             Operation.Signup(user.ID, _names.GetName(user), command);
             await UpdateOperationMessage(e.Channel);
         }
@@ -164,7 +170,7 @@ namespace OpBot
             try
             {
                 if (commandParts.Length < 4)
-                    throw new OpbotInvalidValueException("Missing parameters. Must specify at least <op> <size> <day>.");
+                    throw new OpBotInvalidValueException("Missing parameters. Must specify at least <op> <size> <day>.");
 
                 var newOperation = new Operation();
                 newOperation.SetSizeFromString(commandParts[2]);
@@ -180,8 +186,8 @@ namespace OpBot
                 TimeSpan time;
                 if (commandParts.Length > 4)
                 {
-                    if (!TimeSpan.TryParse(commandParts[4], out time))
-                        throw new OpbotInvalidValueException($"{commandParts[4]} is not a valid time.");
+                    if (!TimeSpan.TryParse(commandParts[4], out time) || time.Hours > 23)
+                        throw new OpBotInvalidValueException($"{commandParts[4]} is not a valid time.");
                 }
                 else
                 {
@@ -208,7 +214,7 @@ namespace OpBot
                 Operation.MessageId = newOpMessage.ID;
                 await newOpMessage.Pin();
             }
-            catch (OpbotInvalidValueException opEx)
+            catch (OpBotInvalidValueException opEx)
             {
                 await e.Channel.SendMessage($"Sorry {_names.GetName(e.Message.Author)} that is an invalid create command.\n{opEx.Message}");
             }
@@ -217,11 +223,12 @@ namespace OpBot
 
         private async Task UpdateOperationMessage(DiscordChannel channel)
         {
+            System.Diagnostics.Debug.Assert(Operation != null);
             var opMessage = await channel.GetMessage(Operation.MessageId);
             await opMessage.Edit(Operation.GetOperationMessageText());
         }
 
-        private string GetVersionText()
+        private static string GetVersionText()
         {
             Version version = Assembly.GetExecutingAssembly().GetName().Version;
             string text = $"OpBot Version: {version.Major}.{version.Minor}.{version.Build}";
@@ -233,6 +240,18 @@ namespace OpBot
         {
             string contentWithNoMentions = _removeMentionsRegex.Replace(content, string.Empty);
             return contentWithNoMentions.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        }
+
+        private bool CheckForOperation(MessageCreateEventArgs e)
+        {
+            if (Operation == null)
+            {
+                e.Channel.SendMessage($"Sorry {_names.GetName(e.Message.Author)}. I cannot do that as there is no current operation")
+                    .GetAwaiter()
+                    .GetResult();
+                return false;
+            }
+            return true;
         }
 
     }

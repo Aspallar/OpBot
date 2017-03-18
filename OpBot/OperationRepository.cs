@@ -29,9 +29,12 @@ namespace OpBot
         {
             if (op != null)
             {
-                IFormatter formatter = new BinaryFormatter();
-                using (Stream stream = new FileStream(_filename, FileMode.Create, FileAccess.Write, FileShare.None))
-                    formatter.Serialize(stream, op);
+                lock (op)
+                {
+                    IFormatter formatter = new BinaryFormatter();
+                    using (Stream stream = new FileStream(_filename, FileMode.Create, FileAccess.Write, FileShare.None))
+                        formatter.Serialize(stream, op);
+                }
             }
             else
             {

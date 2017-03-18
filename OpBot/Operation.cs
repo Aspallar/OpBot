@@ -32,7 +32,8 @@ namespace OpBot
             }
             set
             {
-                _operationName = GetFullName(value);
+                lock (this)
+                    _operationName = GetFullName(value);
             }
         }
 
@@ -46,7 +47,8 @@ namespace OpBot
             {
                 if (value != 8 && value != 16)
                     throw new OpBotInvalidValueException("Invalid size, must be 8 or 16");
-                _size = value;
+                lock (this)
+                    _size = value;
             }
         }
 
@@ -60,7 +62,8 @@ namespace OpBot
             {
                 if (value != "SM" && value != "VM" && value != "MM")
                     throw new OpBotInvalidValueException($"{value} is not a valid operation mode");
-                _mode = value;
+                lock (this)
+                    _mode = value;
             }
         }
 
@@ -92,20 +95,26 @@ namespace OpBot
 
         public void Signup(ulong userId, string name, string role)
         {
-            var member = Members.Where(m => m.UserId == userId).SingleOrDefault();
-            if (member == null)
+            lock (this)
             {
-                member = new OperationMember();
-                Members.Add(member);
+                var member = Members.Where(m => m.UserId == userId).SingleOrDefault();
+                if (member == null)
+                {
+                    member = new OperationMember();
+                    Members.Add(member);
+                }
+                member.UserId = userId;
+                member.UserName = name;
+                member.PrimaryRole = role.ToUpperInvariant();
             }
-            member.UserId = userId;
-            member.UserName = name;
-            member.PrimaryRole = role.ToUpperInvariant();
         }
 
         public void Remove(ulong userId)
         {
-            Members.RemoveAll(m => m.UserId == userId);
+            lock (this)
+            {
+                Members.RemoveAll(m => m.UserId == userId);
+            }
         }
 
         public string GetOperationMessageText()

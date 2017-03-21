@@ -15,13 +15,20 @@ namespace OpBot
 
         public async Task Run(string[] args)
         {
+            Console.WriteLine(OpBotUtils.GetVersionText());
             OperationRepository operationRepository = new OperationRepository(Properties.Settings.Default.OperationFile);
+
+            Operation op = operationRepository.Get();
+            if (op == null)
+                Console.WriteLine("No current operation");
+            else
+                Console.WriteLine(op.GetOperationMessageText());
 
             _commandProcessor = new CommandProcessor(new CommandProcessorConfig()
             {
                 OpBotUserId = Properties.Settings.Default.OpBotUserId,
                 Names = _names,
-                Operation = operationRepository.Get(),
+                Operation = op,
                 Repository = operationRepository
             });
 

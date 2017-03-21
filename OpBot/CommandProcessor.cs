@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using DSharpPlus;
 using System.Text.RegularExpressions;
-using System.Reflection;
 
 namespace OpBot
 {
@@ -50,7 +49,7 @@ namespace OpBot
             {
                 string command = commandParts[0].ToUpperInvariant();
 
-                var user = e.Message.Mentions.Where(m => m.ID != Properties.Settings.Default.OpBotUserId).SingleOrDefault();
+                var user = e.Message.Mentions.Where(m => m.ID != _opBotUserId).SingleOrDefault();
                 if (user == null)
                     user = e.Message.Author;
 
@@ -72,7 +71,7 @@ namespace OpBot
                 }
                 else if (command == "VER" || command == "VERSION")
                 {
-                    await e.Channel.SendMessage(GetVersionText());
+                    await e.Channel.SendMessage(OpBotUtils.GetVersionText());
                 }
                 else if (command == "GF")
                 {
@@ -231,14 +230,6 @@ namespace OpBot
             await opMessage.Edit(Operation.GetOperationMessageText());
             _repository?.Save(Operation);
         }
-
-        private static string GetVersionText()
-        {
-            Version version = Assembly.GetExecutingAssembly().GetName().Version;
-            string text = $"OpBot Version: {version.Major}.{version.Minor}.{version.Build}";
-            return text;
-        }
-
 
         private string[] ParseCommand(string content)
         {

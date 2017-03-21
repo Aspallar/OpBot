@@ -22,6 +22,7 @@ namespace OpBot
                 OpBotUserId = Properties.Settings.Default.OpBotUserId,
                 Names = _names,
                 Operation = operationRepository.Get(),
+                Repository = operationRepository
             });
 
             _client = new DiscordClient(new DiscordConfig()
@@ -43,7 +44,7 @@ namespace OpBot
             Console.ReadKey();
             await _client.Disconnect();
 
-            operationRepository.Save(_commandProcessor.Operation);
+            //operationRepository.Save(_commandProcessor.Operation);
 
             _client.Dispose();
         }

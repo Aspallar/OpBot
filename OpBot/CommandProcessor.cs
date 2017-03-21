@@ -14,6 +14,7 @@ namespace OpBot
         private readonly ulong _opBotUserId;
         private readonly NicknameList _names;
         private readonly Regex _removeMentionsRegex = new Regex(@"\<@!?\d+\>");
+        private readonly OperationRepository _repository;
 
         public Operation Operation { get; private set; }
 
@@ -21,6 +22,7 @@ namespace OpBot
         {
             _opBotUserId = config.OpBotUserId;
             _names = config.Names;
+            _repository = config.Repository;
             Operation = config.Operation;
         }
 
@@ -213,6 +215,7 @@ namespace OpBot
                 var newOpMessage = await e.Channel.SendMessage(text);
                 Operation.MessageId = newOpMessage.ID;
                 await newOpMessage.Pin();
+                _repository.Save(Operation);
             }
             catch (OpBotInvalidValueException opEx)
             {
@@ -226,6 +229,7 @@ namespace OpBot
             System.Diagnostics.Debug.Assert(Operation != null);
             var opMessage = await channel.GetMessage(Operation.MessageId);
             await opMessage.Edit(Operation.GetOperationMessageText());
+            _repository?.Save(Operation);
         }
 
         private static string GetVersionText()

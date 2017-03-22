@@ -47,7 +47,16 @@ namespace OpBot
             _client.GuildMemberAdd += Client_GuildMemberAdd;
             _client.GuildMemberUpdate += Client_GuildMemberUpdate;
 
-            await _client.Connect();
+            try
+            {
+                await _client.Connect();
+            }
+            catch (UnauthorizedException)
+            {
+                Console.WriteLine("Authorization Failure. OpBot is unable to log in.");
+                return;
+            }
+
             Console.ReadKey();
             await _client.Disconnect();
 

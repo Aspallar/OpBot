@@ -263,14 +263,14 @@ namespace OpBot
                 if (Operation != null)
                 {
                     var message = await e.Channel.GetMessage(Operation.MessageId);
-                    await message.Unpin();
+                    await UnpinMessage(e, message);
                 }
 
                 Operation = newOperation;
                 var text = Operation.GetOperationMessageText();
                 var newOpMessage = await e.Channel.SendMessage(text);
                 Operation.MessageId = newOpMessage.ID;
-                await newOpMessage.Pin();
+                await PinMessage(e, newOpMessage);
                 _repository.Save(Operation);
             }
             catch (OpBotInvalidValueException opEx)
@@ -278,6 +278,35 @@ namespace OpBot
                 await e.Channel.SendMessage($"Sorry {_names.GetName(e.Message.Author)} that is an invalid create command.\n{opEx.Message}");
             }
 
+        }
+
+        private async Task PinMessage(MessageCreateEventArgs e, DiscordMessage message)
+        {
+            try
+            {
+                await message.Pin();
+            }
+            catch (UnauthorizedException)
+            {
+                await e.Channel.SendMessage($"Sorry {_names.GetName(e.Message.Author)}. {NeedManagePermission("pin")}");
+            }
+        }
+
+        private async Task UnpinMessage(MessageCreateEventArgs e, DiscordMessage message)
+        {
+            try
+            {
+                await message.Unpin();
+            }
+            catch (UnauthorizedException)
+            {
+                await e.Channel.SendMessage($"Sorry {_names.GetName(e.Message.Author)}. {NeedManagePermission("unpin")}");
+            }
+        }
+
+        private string NeedManagePermission(string actionText)
+        {
+            return $"I am unable to {actionText} the previous operation as I need the 'manage messages' permission to do so. Please {actionText} it manually and fix my permissions.";
         }
 
         private async Task UpdateOperationMessage(DiscordChannel channel)

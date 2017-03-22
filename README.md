@@ -77,5 +77,14 @@ To change your role just signup again with the new role.
 
 where \<days> is the number of days to display, defaults to 7
 
+## Edit current operation details
 
- 
+@OpBot edit \<op>\|\<day>\|\<size>\|\<time>|\<mode>
+
+#### Examples
+
+@OpBot edit 20:00  
+@OpBot edit sv  
+@OpBot edit sm  
+@Opbot edit tue
+

@@ -81,6 +81,10 @@ namespace OpBot
                 {
                     await PurgeCommand(e);
                 }
+                else if (command == "EDIT")
+                {
+                    await EditCommand(e, commandParts);
+                }
                 else
                 {
                     await e.Channel.SendMessage($"I'm sorry {_names.GetName(e.Message.Author)} but I don't understand that command.");
@@ -88,6 +92,56 @@ namespace OpBot
             }
 
         }
+
+        private async Task EditCommand(MessageCreateEventArgs e, string[] commandParts)
+        {
+            if (commandParts.Length == 1)
+            {
+                await e.Channel.SendMessage($"Edit what {_names.GetName(e.Message.Author)}?");
+                return;
+            }
+            else if (commandParts.Length > 2)
+            {
+                await e.Channel.SendMessage($"One edit item at a time please {_names.GetName(e.Message.Author)}.");
+                return;
+            }
+
+            TimeSpan time;
+            string param = commandParts[1].ToUpperInvariant();
+
+            try
+            {
+                if (OpBotUtils.IsOperationMode(param))
+                {
+                    Operation.Mode = param;
+                }
+                else if (param == "8" || param == "16")
+                {
+                    Operation.Size = int.Parse(param);
+                }
+                else if (param.IndexOf(":") > 0 
+                    && TimeSpan.TryParse(param, out time)
+                    && time.Hours <= 23)
+                {
+                    Operation.Date = Operation.Date.Date + time;
+                }
+                else if (DateHelper.IsDayName(param))
+                {
+                    DateTime newDate = DateHelper.GetDateForNextOccuranceOfDay(param);
+                    Operation.Date = newDate + Operation.Date.TimeOfDay;
+                }
+                else
+                {
+                    Operation.OperationName = param;
+                }
+                await UpdateOperationMessage(e.Channel);
+            }
+            catch (OpBotInvalidValueException)
+            {
+                await e.Channel.SendMessage($"Sorry {_names.GetName(e.Message.Author)}. I don't understand what you mean by {param}.");
+            }
+        }
+
 
         private async Task GroupFinderCommand(DiscordChannel channel, string[] commandParts)
         {

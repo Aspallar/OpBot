@@ -1,9 +1,30 @@
 ﻿using System;
+using System.Linq;
 
 namespace OpBot
 {
     internal static class DateHelper
     {
+        private static string[] _dayNames =
+        {
+                "MON",
+                "MONDAY",
+                "TUE",
+                "TUES",
+                "TUESDAY",
+                "WED",
+                "WEDNESDAY",
+                "THU",
+                "THUR",
+                "THURSDAY",
+                "FRI",
+                "FRIDAY",
+                "SAT",
+                "SATURDAY",
+                "SUN",
+                "SUNDAY"
+        };
+
         public static DateTime GetDateForNextOccuranceOfDay(string day)
         {
             DateTime dt = DateTime.Now.Date;
@@ -45,6 +66,11 @@ namespace OpBot
                 default:
                     throw new OpBotInvalidValueException($"{day} is not a recognizable day name");
             }
+        }
+
+        public static bool IsDayName(string dayName)
+        {
+            return _dayNames.Contains(dayName);
         }
 
     }

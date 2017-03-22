@@ -17,6 +17,17 @@ namespace OpBot
         {
             Console.WriteLine(OpBotUtils.GetVersionText());
             OperationRepository operationRepository = new OperationRepository(Properties.Settings.Default.OperationFile);
+            IAdminUser admins;
+
+            try
+            {
+                admins = new AdminUsers(Properties.Settings.Default.AdminUsers);
+            }
+            catch (FormatException)
+            {
+                Console.WriteLine("There are invalid AdminUsers entries in config file.");
+                return;
+            }
 
             Operation op = operationRepository.Get();
             if (op == null)
@@ -29,7 +40,8 @@ namespace OpBot
                 OpBotUserId = Properties.Settings.Default.OpBotUserId,
                 Names = _names,
                 Operation = op,
-                Repository = operationRepository
+                Repository = operationRepository,
+                AdminUsers = admins,
             });
 
             _client = new DiscordClient(new DiscordConfig()

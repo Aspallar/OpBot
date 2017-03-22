@@ -14,6 +14,8 @@ namespace OpBot
         private readonly NicknameList _names;
         private readonly Regex _removeMentionsRegex = new Regex(@"\<@!?\d+\>");
         private readonly OperationRepository _repository;
+        private readonly IAdminUser _adminUsers;
+
 
         public Operation Operation { get; private set; }
 
@@ -23,6 +25,7 @@ namespace OpBot
             _names = config.Names;
             _repository = config.Repository;
             Operation = config.Operation;
+            _adminUsers = config.AdminUsers;
         }
 
         public bool IsCommand(MessageCreateEventArgs e)
@@ -184,6 +187,12 @@ namespace OpBot
 
         private async Task PurgeCommand(MessageCreateEventArgs e)
         {
+            if (!_adminUsers.IsAdmin(e.Message.Author.ID))
+            {
+                await e.Channel.SendMessage("You need to be an admin user to use the PURGE command.");
+                return;
+            }
+
             var messages = await e.Channel.GetMessages();
             foreach (var message in messages)
             {

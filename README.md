@@ -88,3 +88,9 @@ where \<days> is the number of days to display, defaults to 7
 @OpBot edit sm  
 @Opbot edit tue
 
+## Purge messges
+
+@OpBot purge
+
+This will delete the last 50 or so messages in the events channel, with the exception of the current operation message. Can only be used by OpBot admin users. To avoid discord rate limits messages are deleted at a rate of one per 1.5 seconds. Use with caution.
+

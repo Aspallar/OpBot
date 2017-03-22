@@ -35,6 +35,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <RunPostBuildEvent>Always</RunPostBuildEvent>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="DSharpPlus, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\DSharpPlus.1.5.0-rc1\lib\DSharpPlus.dll</HintPath>
@@ -62,6 +65,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AdminUser.cs" />
     <Compile Include="CommandProcessorConfig.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="DateHelper.cs" />
@@ -69,6 +73,7 @@
     <Compile Include="Greeting.cs" />
     <Compile Include="GroupFinder.cs" />
     <Compile Include="CommandProcessor.cs" />
+    <Compile Include="IAdminUser.cs" />
     <Compile Include="NicknameEntry.cs" />
     <Compile Include="NicknameList.cs" />
     <Compile Include="OpBotUtils.cs" />

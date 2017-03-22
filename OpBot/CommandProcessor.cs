@@ -313,7 +313,7 @@ namespace OpBot
             }
         }
 
-        private string NeedManagePermission(string actionText)
+        private static string NeedManagePermission(string actionText)
         {
             return $"I am unable to {actionText} the previous operation as I need the 'manage messages' permission to do so. Please {actionText} it manually and fix my permissions.";
         }

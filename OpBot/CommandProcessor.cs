@@ -95,6 +95,9 @@ namespace OpBot
 
         private async Task EditCommand(MessageCreateEventArgs e, string[] commandParts)
         {
+            if (!CheckForOperation(e))
+                return;
+
             if (commandParts.Length == 1)
             {
                 await e.Channel.SendMessage($"Edit what {_names.GetName(e.Message.Author)}?");

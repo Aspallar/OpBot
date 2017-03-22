@@ -297,7 +297,7 @@ namespace OpBot
             }
             catch (UnauthorizedException)
             {
-                await e.Channel.SendMessage($"Sorry {_names.GetName(e.Message.Author)}. {NeedManagePermission("pin")}");
+                await e.Channel.SendMessage($"Sorry {_names.GetName(e.Message.Author)}. {NeedManagePermission("pin the operation")}");
             }
         }
 
@@ -309,13 +309,13 @@ namespace OpBot
             }
             catch (UnauthorizedException)
             {
-                await e.Channel.SendMessage($"Sorry {_names.GetName(e.Message.Author)}. {NeedManagePermission("unpin")}");
+                await e.Channel.SendMessage($"Sorry {_names.GetName(e.Message.Author)}. {NeedManagePermission("unpin the previous operation")}");
             }
         }
 
         private static string NeedManagePermission(string actionText)
         {
-            return $"I am unable to {actionText} the previous operation as I need the 'manage messages' permission to do so. Please {actionText} it manually and fix my permissions.";
+            return $"I am unable to {actionText} as I need the 'manage messages' permission to do so. Please do so manually and get my permissions fixed.";
         }
 
         private async Task UpdateOperationMessage(DiscordChannel channel)

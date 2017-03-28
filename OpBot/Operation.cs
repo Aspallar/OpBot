@@ -119,7 +119,11 @@ namespace OpBot
 
         public string GetOperationMessageText()
         {
+            DateTime baseTime = Date.IsDaylightSavingTime() ? Date.AddHours(1) : Date;
             string text = $"**{OperationName}** {Size}-man {Mode}\n{Date.ToString("dddd")} {Date.ToLongDateString()} {Date.ToShortTimeString()} (UTC)\n";
+            text += "  *" + baseTime.ToShortTimeString() + " Western Europe (UK)*\n";
+            text += "  *" + baseTime.AddHours(1).ToShortTimeString() + " Central Europe (Belgium)*\n";
+            text += "  *" + baseTime.AddHours(2).ToShortTimeString() + " Eastern Europe (Estonia)*\n";
             text += "```";
             text += "Tanks:\n";
             text += Roles("TANK");

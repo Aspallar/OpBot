@@ -60,13 +60,17 @@ namespace OpBot
                 {
                     await CreateCommand(e, commandParts);
                 }
-                else if (command == "TANK" || command == "DPS" || command == "HEAL")
+                else if (command == "TANK" || command == "DPS" || command == "HEAL" || command == "HEALZ" || command == "HEALS")
                 {
                     await SignupCommand(e, command, user);
                 }
                 else if (command == "ADDNOTE")
                 {
                     await AddNoteCommand(e, commandParts);
+                }
+                else if (command == "DELNOTE")
+                {
+                    await DeleteNoteCommand(e, commandParts);
                 }
                 else if (command == "REMOVE")
                 {
@@ -79,6 +83,10 @@ namespace OpBot
                 else if (command == "GF")
                 {
                     await GroupFinderCommand(e.Channel, commandParts);
+                }
+                else if (command == "REPOST")
+                {
+                    await RepostCommand(e);
                 }
                 else if (command == "PURGE")
                 {
@@ -94,6 +102,31 @@ namespace OpBot
                 }
             }
 
+        }
+
+        private async Task DeleteNoteCommand(MessageCreateEventArgs e, string[] commandParts)
+        {
+            if (commandParts.Length != 2)
+            {
+                await e.Channel.SendMessage("Specify a note number or * for all notes");
+                return;
+            }
+            if (commandParts[1] == "*")
+            {
+                Operation.Notes = new List<string>();
+            }
+            else
+            {
+                int noteNumber;
+
+                if (!int.TryParse(commandParts[1], out noteNumber) || noteNumber < 1 || noteNumber > Operation.Notes.Count)
+                {
+                    await e.Channel.SendMessage("Specify a note number or * for all notes");
+                    return;
+                }
+                Operation.Notes.RemoveAt(noteNumber - 1);
+            }
+            await UpdateOperationMessage(e.Channel);
         }
 
         private async Task EditCommand(MessageCreateEventArgs e, string[] commandParts)
@@ -226,8 +259,12 @@ namespace OpBot
 
         private async Task SignupCommand(MessageCreateEventArgs e, string command, DiscordUser user)
         {
+            if (command.StartsWith("HEAL"))
+                command = command.Substring(0, 4);
+
             if (!CheckForOperation(e))
                 return;
+
             Operation.Signup(user.ID, _names.GetName(user), command);
             await UpdateOperationMessage(e.Channel);
         }
@@ -288,6 +325,27 @@ namespace OpBot
             }
 
         }
+
+        private async Task RepostCommand(MessageCreateEventArgs e)
+        {
+            DiscordMessage previousOperationMessage;
+
+            try
+            {
+                previousOperationMessage = await e.Channel.GetMessage(Operation.MessageId);
+            }
+            catch (NotFoundException)
+            {
+                previousOperationMessage = null;
+            }
+            DiscordMessage newOperationMessage = await e.Channel.SendMessage(Operation.GetOperationMessageText());
+            Operation.MessageId = newOperationMessage.ID;
+            await PinMessage(e, newOperationMessage);
+            if (previousOperationMessage != null)
+                await previousOperationMessage?.Delete();
+            _repository.Save(Operation);
+        }
+
 
         private async Task PinMessage(MessageCreateEventArgs e, DiscordMessage message)
         {

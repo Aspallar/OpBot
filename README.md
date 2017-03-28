@@ -42,7 +42,7 @@ Parameters enclosed in square brackets [] are optional.
 \<primary role> is one of  
 * tank  
 * dps  
-* heal
+* heal (or heals, healz)
 
 
 #### Examples
@@ -72,6 +72,12 @@ To change your role just signup again with the new role.
 ## Add a note
 @OpBot addnote \<The text of the note>
 
+## Delete a note
+@OpBot delnote \<notenumber>
+
+where \<notenumber> is the number of the note, 1 for the first note 2 for the second etc,
+or specify * to delete all notes.
+
 ## Display Group Finder Operations
 @OpBot gf [\<days>]
 
@@ -87,6 +93,12 @@ where \<days> is the number of days to display, defaults to 7
 @OpBot edit sv  
 @OpBot edit sm  
 @Opbot edit tue
+
+## Repost the current operation
+
+@OpBot repost
+
+This will repost the current operation, deleting the old operation message.
 
 ## Purge messges
 

@@ -74,6 +74,7 @@
     <Compile Include="GroupFinder.cs" />
     <Compile Include="CommandProcessor.cs" />
     <Compile Include="IAdminUser.cs" />
+    <Compile Include="MessageDeleter.cs" />
     <Compile Include="NicknameEntry.cs" />
     <Compile Include="NicknameList.cs" />
     <Compile Include="OpBotUtils.cs" />

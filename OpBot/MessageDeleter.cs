@@ -1,12 +1,67 @@
-﻿using System;
+﻿using DSharpPlus;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 
 namespace OpBot
 {
-    class MessageDeleter
+    internal class MessageDeleter : IDisposable
     {
+        private SortedList<DateTime, DiscordMessage> _messageList;
+        private Timer _timer;
+
+        public MessageDeleter()
+        {
+            _messageList = new SortedList<DateTime, DiscordMessage>();
+            _timer = new Timer(x => { DeleteMessage(); }, null, Timeout.Infinite, Timeout.Infinite);
+        }
+
+        public void AddMessage(DiscordMessage message, int lifetime)
+        {
+            lock (this)
+            {
+                DateTime due = DateTime.Now.AddMilliseconds(lifetime);
+                _messageList.Add(due, message);
+                SetTimer();
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_timer != null)
+            {
+                _timer.Dispose();
+                _timer = null;
+            }
+        }
+
+        private void DeleteMessage()
+        {
+            lock (this)
+            {
+                if (_messageList.Count > 0)
+                {
+                    _messageList.Values[0].Delete().GetAwaiter().GetResult();
+                    _messageList.RemoveAt(0);
+                    SetTimer();
+                }
+            }
+        }
+
+        private void SetTimer()
+        {
+            if (_messageList.Count == 0)
+            {
+                _timer.Change(Timeout.Infinite, Timeout.Infinite);  // disable timer
+                return;
+            }
+
+            DateTime due = _messageList.Keys[0];
+            TimeSpan delta = due - DateTime.Now;
+            int delay = Convert.ToInt32(delta.TotalMilliseconds);
+            if (delay < 0)
+                delay = 0;
+            _timer.Change(delay, Timeout.Infinite);
+        }
     }
 }

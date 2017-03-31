@@ -15,6 +15,7 @@ namespace OpBot
         private readonly Regex _removeMentionsRegex = new Regex(@"\<@!?\d+\>");
         private readonly OperationRepository _repository;
         private readonly IAdminUser _adminUsers;
+        private readonly MessageDeleter _messageDeleter;
 
 
         public Operation Operation { get; private set; }
@@ -26,6 +27,7 @@ namespace OpBot
             _repository = config.Repository;
             Operation = config.Operation;
             _adminUsers = config.AdminUsers;
+            _messageDeleter = new MessageDeleter();
         }
 
         public bool IsCommand(MessageCreateEventArgs e)
@@ -90,7 +92,7 @@ namespace OpBot
                 }
                 else if (command == "RAIDTIMES")
                 {
-                    await RaidTimesCommand(e.Channel);
+                    await RaidTimesCommand(e);
                 }
                 else if (command == "PURGE")
                 {
@@ -108,17 +110,25 @@ namespace OpBot
 
         }
 
-        private async Task RaidTimesCommand(DiscordChannel channel)
+        private async Task RaidTimesCommand(MessageCreateEventArgs e)
         {
-            const string selfDestruct = ":stopwatch: This message will self destruct in 10 minutes.";
+            if (!CheckForOperation(e))
+                return;
+
+            // TODO: remove this log message
+            Console.WriteLine($"RaidTimesCommand invoked by {_names.GetName(e.Message.Author)}");
+            const string selfDestruct = ":stopwatch: Message will self destruct after 3 minutes.";
             List<TimeZoneTime> times = TimeZones.GetZoneTimes(Operation.Date);
             string timesMessage = TimeZones.ToString(times);
-            StringBuilder message = new StringBuilder(timesMessage.Length + selfDestruct.Length + 8);
-            message.Append("```");
-            message.Append(timesMessage);
-            message.AppendLine("```");
-            message.Append(selfDestruct);
-            await channel.SendMessage(message.ToString());
+            StringBuilder messageText = new StringBuilder(timesMessage.Length + selfDestruct.Length + 8);
+            messageText.Append("```");
+            messageText.Append(timesMessage);
+            messageText.AppendLine("```");
+            messageText.Append(selfDestruct);
+            await e.Message.Delete();
+            Console.WriteLine($"Message length: {messageText.Length}");
+            DiscordMessage message = await e.Channel.SendMessage(messageText.ToString());
+            _messageDeleter.AddMessage(message, 180000);
         }
 
         private async Task DeleteNoteCommand(MessageCreateEventArgs e, string[] commandParts)

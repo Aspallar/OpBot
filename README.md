@@ -94,6 +94,14 @@ where \<days> is the number of days to display, defaults to 7
 @OpBot edit sm  
 @Opbot edit tue
 
+## Raid Times
+
+@Opbot raidtimes
+
+This will show the time of the current operation in a large number of timezones.
+As the resulting message is quite large it will automatically be deleted after three minutes
+in order to avoid clutering the raid channel.
+
 ## Repost the current operation
 
 @OpBot repost

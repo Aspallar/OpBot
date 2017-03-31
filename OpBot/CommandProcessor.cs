@@ -88,6 +88,10 @@ namespace OpBot
                 {
                     await RepostCommand(e);
                 }
+                else if (command == "RAIDTIMES")
+                {
+                    await RaidTimesCommand(e.Channel);
+                }
                 else if (command == "PURGE")
                 {
                     await PurgeCommand(e);
@@ -102,6 +106,19 @@ namespace OpBot
                 }
             }
 
+        }
+
+        private async Task RaidTimesCommand(DiscordChannel channel)
+        {
+            const string selfDestruct = ":stopwatch: This message will self destruct in 10 minutes.";
+            List<TimeZoneTime> times = TimeZones.GetZoneTimes(Operation.Date);
+            string timesMessage = TimeZones.ToString(times);
+            StringBuilder message = new StringBuilder(timesMessage.Length + selfDestruct.Length + 8);
+            message.Append("```");
+            message.Append(timesMessage);
+            message.AppendLine("```");
+            message.Append(selfDestruct);
+            await channel.SendMessage(message.ToString());
         }
 
         private async Task DeleteNoteCommand(MessageCreateEventArgs e, string[] commandParts)

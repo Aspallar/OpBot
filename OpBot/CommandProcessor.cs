@@ -116,6 +116,9 @@ namespace OpBot
 
         private async Task AltCommand(MessageCreateEventArgs e, string[] commandParts, DiscordUser user)
         {
+            if (!CheckForOperation(e))
+                return;
+
             try
             {
                 Operation.SetAltRoles(_names.GetName(user), user.ID, commandParts);

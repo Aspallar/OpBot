@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpBot", "OpBot\OpBot.csproj
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{19586E03-069B-4759-83DD-86236B603332}"
 EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "OpBotSetup", "OpBotSetup\OpBotSetup.vdproj", "{F251DE88-4EAC-4035-B137-6E24D349DC91}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,6 +19,8 @@ Global
 		{3B999664-A1EB-4414-9B6E-15DD4AC2084B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3B999664-A1EB-4414-9B6E-15DD4AC2084B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3B999664-A1EB-4414-9B6E-15DD4AC2084B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F251DE88-4EAC-4035-B137-6E24D349DC91}.Debug|Any CPU.ActiveCfg = Debug
+		{F251DE88-4EAC-4035-B137-6E24D349DC91}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -13,7 +13,7 @@ namespace OpBot
         public MessageDeleter()
         {
             _messageList = new SortedList<DateTime, DiscordMessage>();
-            _timer = new Timer(x => { DeleteMessage(); }, null, Timeout.Infinite, Timeout.Infinite);
+            _timer = new Timer(x => DeleteMessage(), null, Timeout.Infinite, Timeout.Infinite);
         }
 
         public void AddMessage(DiscordMessage message, int lifetime)
@@ -28,28 +28,50 @@ namespace OpBot
 
         public void Dispose()
         {
-            if (_timer != null)
+            lock (this)
             {
-                _timer.Dispose();
-                _timer = null;
+                if (_timer != null)
+                {
+                    _timer.Dispose();
+                    _timer = null;
+                }
             }
         }
-
+         
         private void DeleteMessage()
         {
+            DiscordMessage message = null;
             lock (this)
             {
                 if (_messageList.Count > 0)
                 {
-                    _messageList.Values[0].Delete().GetAwaiter().GetResult();
+                    message = _messageList.Values[0];
                     _messageList.RemoveAt(0);
                     SetTimer();
+                }
+            }
+            if (message != null)
+            {
+                try
+                {
+                    message.Delete().GetAwaiter().GetResult();
+                }
+                catch (NotFoundException)
+                {
+                    // it is not an error if message not found
+                    // as it may have been manually deleted
                 }
             }
         }
 
         private void SetTimer()
         {
+            if (_timer == null)
+            {
+                // we have been disposed, do nothing
+                return;
+            }
+
             if (_messageList.Count == 0)
             {
                 _timer.Change(Timeout.Infinite, Timeout.Infinite);  // disable timer

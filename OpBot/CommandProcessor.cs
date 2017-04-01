@@ -84,7 +84,7 @@ namespace OpBot
                 }
                 else if (command == "GF")
                 {
-                    await GroupFinderCommand(e.Channel, commandParts);
+                    await GroupFinderCommand(e, commandParts);
                 }
                 else if (command == "REPOST")
                 {
@@ -112,23 +112,27 @@ namespace OpBot
 
         private async Task RaidTimesCommand(MessageCreateEventArgs e)
         {
+#if DEBUG
+            const int messageLifetime = 180000; 
+#else
+            const int messageLifetime = 180000; // 3 minutes
+#endif
             if (!CheckForOperation(e))
                 return;
 
             // TODO: remove this log message
             Console.WriteLine($"RaidTimesCommand invoked by {_names.GetName(e.Message.Author)}");
-            const string selfDestruct = ":stopwatch: Message will self destruct after 3 minutes.";
             List<TimeZoneTime> times = TimeZones.GetZoneTimes(Operation.Date);
             string timesMessage = TimeZones.ToString(times);
-            StringBuilder messageText = new StringBuilder(timesMessage.Length + selfDestruct.Length + 8);
+            StringBuilder messageText = new StringBuilder(timesMessage.Length + 80);
             messageText.Append("```");
             messageText.Append(timesMessage);
             messageText.AppendLine("```");
-            messageText.Append(selfDestruct);
-            await e.Message.Delete();
+            messageText.Append(GetSelfDestructText(messageLifetime));
             Console.WriteLine($"Message length: {messageText.Length}");
             DiscordMessage message = await e.Channel.SendMessage(messageText.ToString());
-            _messageDeleter.AddMessage(message, 180000);
+            _messageDeleter.AddMessage(message, messageLifetime);
+            await SafeDeleteMessage(e.Channel, e.Message);
         }
 
         private async Task DeleteNoteCommand(MessageCreateEventArgs e, string[] commandParts)
@@ -209,12 +213,13 @@ namespace OpBot
         }
 
 
-        private async Task GroupFinderCommand(DiscordChannel channel, string[] commandParts)
+        private async Task GroupFinderCommand(MessageCreateEventArgs e, string[] commandParts)
         {
+            const int messageLifetime = 60000;
             int days = 7;
             if (commandParts.Length > 2)
             {
-                await channel.SendMessage($"Invalid GF command");
+                await e.Channel.SendMessage($"Invalid GF command");
                 return;
             }
             if (commandParts.Length == 2)
@@ -222,7 +227,7 @@ namespace OpBot
                 string dayString = commandParts[1];
                 if (!int.TryParse(dayString, out days))
                 {
-                    await channel.SendMessage($"{dayString} is not a number");
+                    await e.Channel.SendMessage($"{dayString} is not a number");
                     return;
                 }
                 if (days > 14) days = 14;
@@ -242,7 +247,10 @@ namespace OpBot
                 dt = dt.AddDays(1);
             }
             msg.AppendLine("```");
-            await channel.SendMessage(msg.ToString());
+            msg.Append(GetSelfDestructText(messageLifetime));
+            DiscordMessage message = await e.Channel.SendMessage(msg.ToString());
+            _messageDeleter.AddMessage(message, messageLifetime);
+            await SafeDeleteMessage(e.Channel, e.Message);
         }
 
         private async Task PurgeCommand(MessageCreateEventArgs e)
@@ -258,8 +266,20 @@ namespace OpBot
             {
                 if (Operation == null || message.ID != Operation.MessageId)
                 {
+                    try
+                    {
+                        await message.Delete();
+                    }
+                    catch (NotFoundException)
+                    {
+                        // we dont care if message is not there
+                    }
+                    catch (UnauthorizedException)
+                    {
+                        await e.Channel.SendMessage(NeedManagePermission("purge messages"));
+                        break; // foreach
+                    }
                     await Task.Delay(1500);
-                    await message.Delete();
                 }
             }
         }
@@ -427,6 +447,28 @@ namespace OpBot
                 return false;
             }
             return true;
+        }
+
+        private string GetSelfDestructText(int lifetime)
+        {
+            int minutes = lifetime / 60000;
+            return $":stopwatch: Message will self destruct in {minutes} minutes";
+        }
+
+        private async Task SafeDeleteMessage(DiscordChannel channel, DiscordMessage message)
+        {
+            try
+            {
+                await message.Delete();
+            }
+            catch (NotFoundException)
+            {
+                // do nothing. Its ok for message to have been already deleted
+            }
+            catch (UnauthorizedException)
+            {
+                await channel.SendMessage($":warning: Warning!\n\nMy diodes are hurting because I do not appear to have the \"Manage Messages\" permission. This is required for me to operate properly, please assign me a role that has the \"Manage Messages\" permission.");
+            }
         }
 
     }

@@ -11,6 +11,7 @@ namespace OpBot
         private string _operationName;
         private int _size;
         private string _mode;
+        private List<AltRole> _altRoles;
 
         public ulong MessageId { get; set; }
 
@@ -22,6 +23,7 @@ namespace OpBot
         {
             Notes = new List<string>();
             Members = new List<OperationMember>();
+            _altRoles = new List<AltRole>();
         }
 
         public string OperationName
@@ -132,6 +134,10 @@ namespace OpBot
             text += "Healers:\n";
             text += Roles("HEAL");
             text += "```";
+            if (_altRoles.Count > 0)
+            {
+                text += $"\nAlternative/Reserve Roles {AltRoles()}";
+            }
             if (Notes.Count > 0)
                 text += "\n";
             foreach (string note in Notes)
@@ -139,6 +145,22 @@ namespace OpBot
                 text += note + "\n";
             }
             return text;
+        }
+
+        public void SetAltRoles(string username, ulong userid, string[] roles)
+        {
+            lock (this)
+            {
+                AltRole altRole = _altRoles.Where(x => x.UserId == userid).SingleOrDefault();
+                if (altRole == null)
+                {
+                    altRole = new AltRole(username, userid);
+                    _altRoles.Add(altRole);
+                }
+                altRole.Set(roles);
+                if (!altRole.HasAnyRole)
+                    _altRoles.Remove(altRole);
+            }
         }
 
         private string Roles(string primaryRole)
@@ -152,6 +174,21 @@ namespace OpBot
                 text += $"    {count.ToString()}. {member.UserName}\n";
             }
             return text;
+        }
+
+        private string AltRoles()
+        {
+            int padding = _altRoles.Max(x => x.Name.Length) + 1;
+            StringBuilder sb = new StringBuilder(1024);
+            sb.Append("```");
+            foreach (AltRole role in _altRoles)
+            {
+                sb.Append(role.Name.PadRight(padding));
+                sb.Append(' ');
+                sb.Append(role.ToString());
+            }
+            sb.AppendLine("```");
+            return sb.ToString();
         }
 
     }

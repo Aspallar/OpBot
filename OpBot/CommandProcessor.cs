@@ -66,6 +66,10 @@ namespace OpBot
                 {
                     await SignupCommand(e, command, user);
                 }
+                else if (command == "ALT" || command == "RESERVE")
+                {
+                    await AltCommand(e, commandParts, user);
+                }
                 else if (command == "ADDNOTE")
                 {
                     await AddNoteCommand(e, commandParts);
@@ -109,6 +113,20 @@ namespace OpBot
             }
 
         }
+
+        private async Task AltCommand(MessageCreateEventArgs e, string[] commandParts, DiscordUser user)
+        {
+            try
+            {
+                Operation.SetAltRoles(_names.GetName(user), user.ID, commandParts);
+                await UpdateOperationMessage(e.Channel);
+            }
+            catch (OpBotInvalidValueException ex)
+            {
+                await e.Channel.SendMessage($"Sorry {_names.GetName(e.Message.Author)}.\n {ex.Message}");
+            }
+        }
+
 
         private async Task RaidTimesCommand(MessageCreateEventArgs e)
         {

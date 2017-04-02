@@ -346,10 +346,11 @@ namespace OpBot
 
                 var newOperation = new Operation();
                 newOperation.SetSizeFromString(commandParts[2]);
-                newOperation.Date = DateHelper.GetDateForNextOccuranceOfDay(commandParts[3]);
+                DateTime operationDate = DateHelper.GetDateForNextOccuranceOfDay(commandParts[3]);
+
                 if (commandParts[1].ToUpperInvariant() == "GF")
                 {
-                    newOperation.OperationName = GroupFinder.OperationOn(newOperation.Date);
+                    newOperation.OperationName = GroupFinder.OperationOn(operationDate);
                 }
                 else
                 {
@@ -358,14 +359,14 @@ namespace OpBot
                 TimeSpan time;
                 if (commandParts.Length > 4)
                 {
-                    if (!TimeSpan.TryParse(commandParts[4], out time) || time.Hours > 23)
+                    if (!TimeSpan.TryParse(commandParts[4], out time) || time.TotalHours > 23)
                         throw new OpBotInvalidValueException($"{commandParts[4]} is not a valid time.");
                 }
                 else
                 {
                     time = new TimeSpan(19, 30, 0);
                 }
-                newOperation.Date += time;
+                newOperation.Date = operationDate + time;
                 if (commandParts.Length > 5)
                 {
                     newOperation.Mode = commandParts[5].ToUpperInvariant();

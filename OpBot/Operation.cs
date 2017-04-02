@@ -13,17 +13,39 @@ namespace OpBot
         private string _mode;
         private List<AltRole> _altRoles;
         private List<string> _notes;
-
-        public ulong MessageId { get; set; }
-
-        public DateTime Date { get; set; }
-        public List<OperationMember> Members { get; set; }
+        private List<OperationMember> _members;
+        private ulong _messageId;
+        private DateTime _date;
 
         public Operation()
         {
-            Members = new List<OperationMember>();
+            _members = new List<OperationMember>();
             _altRoles = new List<AltRole>();
             _notes = new List<string>();
+        }
+
+        public ulong MessageId
+        {
+            get
+            {
+                return _messageId;
+            }
+            set
+            {
+                lock (this) _messageId = value;
+            }
+        }
+
+        public DateTime Date
+        {
+            get
+            {
+                return _date;
+            }
+            set
+            {
+                lock (this) _date = value;
+            }
         }
 
         public string OperationName
@@ -99,11 +121,11 @@ namespace OpBot
         {
             lock (this)
             {
-                var member = Members.Where(m => m.UserId == userId).SingleOrDefault();
+                var member = _members.Where(m => m.UserId == userId).SingleOrDefault();
                 if (member == null)
                 {
                     member = new OperationMember();
-                    Members.Add(member);
+                    _members.Add(member);
                 }
                 member.UserId = userId;
                 member.UserName = name;
@@ -115,7 +137,7 @@ namespace OpBot
         {
             lock (this)
             {
-                Members.RemoveAll(m => m.UserId == userId);
+                _members.RemoveAll(m => m.UserId == userId);
             }
         }
 
@@ -147,8 +169,8 @@ namespace OpBot
 
         public string GetOperationMessageText()
         {
-            DateTime baseTime = Date.IsDaylightSavingTime() ? Date.AddHours(1) : Date;
-            string text = $"**{OperationName}** {Size}-man {Mode}\n{Date.ToString("dddd")} {Date.ToLongDateString()} {Date.ToShortTimeString()} (UTC)\n";
+            DateTime baseTime = _date.IsDaylightSavingTime() ? _date.AddHours(1) : _date;
+            string text = $"**{OperationName}** {Size}-man {Mode}\n{_date.ToString("dddd")} {_date.ToLongDateString()} {_date.ToShortTimeString()} (UTC)\n";
             text += "  *" + baseTime.ToShortTimeString() + " Western Europe (UK)*\n";
             text += "  *" + baseTime.AddHours(1).ToShortTimeString() + " Central Europe (Belgium)*\n";
             text += "  *" + baseTime.AddHours(2).ToShortTimeString() + " Eastern Europe (Estonia)*\n";
@@ -193,7 +215,7 @@ namespace OpBot
         {
             int count = 0;
             string text = "";
-            var roleMembers = Members.Where(m => m.PrimaryRole == primaryRole).ToList();
+            var roleMembers = _members.Where(m => m.PrimaryRole == primaryRole).ToList();
             foreach (var member in roleMembers)
             {
                 ++count;

@@ -165,18 +165,18 @@ namespace OpBot
             }
             if (commandParts[1] == "*")
             {
-                Operation.Notes = new List<string>();
+                Operation.ResetNotes();
             }
             else
             {
                 int noteNumber;
 
-                if (!int.TryParse(commandParts[1], out noteNumber) || noteNumber < 1 || noteNumber > Operation.Notes.Count)
+                if (!int.TryParse(commandParts[1], out noteNumber) || noteNumber < 1 || noteNumber > Operation.NoteCount)
                 {
                     await e.Channel.SendMessage("Specify a note number or * for all notes");
                     return;
                 }
-                Operation.Notes.RemoveAt(noteNumber - 1);
+                Operation.DeleteNote(noteNumber - 1);
             }
             await UpdateOperationMessage(e.Channel);
         }
@@ -320,7 +320,7 @@ namespace OpBot
             if (commandParts.Length > 1)
             {
                 string text = string.Join(" ", commandParts, 1, commandParts.Length - 1);
-                Operation.Notes.Add(text);
+                Operation.AddNote(text);
             }
             await UpdateOperationMessage(e.Channel);
         }

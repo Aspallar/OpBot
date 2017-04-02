@@ -12,18 +12,18 @@ namespace OpBot
         private int _size;
         private string _mode;
         private List<AltRole> _altRoles;
+        private List<string> _notes;
 
         public ulong MessageId { get; set; }
 
         public DateTime Date { get; set; }
         public List<OperationMember> Members { get; set; }
-        public List<string> Notes { get; set; }
 
         public Operation()
         {
-            Notes = new List<string>();
             Members = new List<OperationMember>();
             _altRoles = new List<AltRole>();
+            _notes = new List<string>();
         }
 
         public string OperationName
@@ -119,6 +119,32 @@ namespace OpBot
             }
         }
 
+        public void AddNote(string note)
+        {
+            lock (this)
+            {
+                _notes.Add(note);
+            }
+        }
+
+        public void DeleteNote(int noteIndex)
+        {
+            lock (this)
+            {
+                _notes.RemoveAt(noteIndex);
+            }
+        }
+
+        public void ResetNotes()
+        {
+            lock (this)
+            {
+                _notes = new List<string>();
+            }
+        }
+
+        public int NoteCount => _notes.Count;
+
         public string GetOperationMessageText()
         {
             DateTime baseTime = Date.IsDaylightSavingTime() ? Date.AddHours(1) : Date;
@@ -138,9 +164,9 @@ namespace OpBot
             {
                 text += $"\nAlternative/Reserve Roles {AltRoles()}";
             }
-            if (Notes.Count > 0)
+            if (_notes.Count > 0)
                 text += "\n";
-            foreach (string note in Notes)
+            foreach (string note in _notes)
             {
                 text += note + "\n";
             }

@@ -167,34 +167,6 @@ namespace OpBot
 
         public int NoteCount => _notes.Count;
 
-        public string GetOperationMessageText()
-        {
-            DateTime baseTime = _date.IsDaylightSavingTime() ? _date.AddHours(1) : _date;
-            string text = $"**{OperationName}** {Size}-man {Mode}\n{_date.ToString("dddd")} {_date.ToLongDateString()} {_date.ToShortTimeString()} (UTC)\n";
-            text += "  *" + baseTime.ToShortTimeString() + " Western Europe (UK)*\n";
-            text += "  *" + baseTime.AddHours(1).ToShortTimeString() + " Central Europe (Belgium)*\n";
-            text += "  *" + baseTime.AddHours(2).ToShortTimeString() + " Eastern Europe (Estonia)*\n";
-            text += "```";
-            text += "Tanks:\n";
-            text += Roles("TANK");
-            text += "Damage:\n";
-            text += Roles("DPS");
-            text += "Healers:\n";
-            text += Roles("HEAL");
-            text += "```";
-            if (_altRoles.Count > 0)
-            {
-                text += $"\nAlternative/Reserve Roles {AltRoles()}";
-            }
-            if (_notes.Count > 0)
-                text += "\n";
-            foreach (string note in _notes)
-            {
-                text += note + "\n";
-            }
-            return text;
-        }
-
         public void SetAltRoles(string username, ulong userid, string[] roles)
         {
             lock (this)
@@ -211,7 +183,35 @@ namespace OpBot
             }
         }
 
-        private string Roles(string primaryRole)
+        public string GetOperationMessageText()
+        {
+            DateTime baseTime = _date.IsDaylightSavingTime() ? _date.AddHours(1) : _date;
+            string text = $"**{OperationName}** {Size}-man {Mode}\n{_date.ToString("dddd")} {_date.ToLongDateString()} {_date.ToShortTimeString()} (UTC)\n";
+            text += "  *" + baseTime.ToShortTimeString() + " Western Europe (UK)*\n";
+            text += "  *" + baseTime.AddHours(1).ToShortTimeString() + " Central Europe (Belgium)*\n";
+            text += "  *" + baseTime.AddHours(2).ToShortTimeString() + " Eastern Europe (Estonia)*\n";
+            text += "```";
+            text += "Tanks:\n";
+            text += RolesToString("TANK");
+            text += "Damage:\n";
+            text += RolesToString("DPS");
+            text += "Healers:\n";
+            text += RolesToString("HEAL");
+            text += "```";
+            if (_altRoles.Count > 0)
+            {
+                text += $"\nAlternative/Reserve Roles {AltRolesToString()}";
+            }
+            if (_notes.Count > 0)
+                text += "\n";
+            foreach (string note in _notes)
+            {
+                text += note + "\n";
+            }
+            return text;
+        }
+
+        private string RolesToString(string primaryRole)
         {
             int count = 0;
             string text = "";
@@ -224,7 +224,7 @@ namespace OpBot
             return text;
         }
 
-        private string AltRoles()
+        private string AltRolesToString()
         {
             int padding = _altRoles.Max(x => x.Name.Length) + 1;
             StringBuilder sb = new StringBuilder(1024);

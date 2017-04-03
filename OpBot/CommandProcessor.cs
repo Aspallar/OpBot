@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace OpBot
 {
-    internal class CommandProcessor
+    internal class CommandProcessor : IDisposable
     {
         private readonly ulong _opBotUserId;
         private readonly NicknameList _names;
@@ -364,7 +364,7 @@ namespace OpBot
                 }
                 else
                 {
-                    time = new TimeSpan(19, 30, 0);
+                    time = DateTime.Now.IsDaylightSavingTime() ? new TimeSpan(18, 30, 0) : new TimeSpan(19, 30, 0);
                 }
                 newOperation.Date = operationDate + time;
                 if (commandParts.Length > 5)
@@ -375,6 +375,7 @@ namespace OpBot
                 {
                     newOperation.Mode = "SM";
                 }
+
                 if (Operation != null)
                 {
                     var message = await e.Channel.GetMessage(Operation.MessageId);
@@ -471,10 +472,11 @@ namespace OpBot
             return true;
         }
 
-        private string GetSelfDestructText(int lifetime)
+        private static string GetSelfDestructText(int lifetime)
         {
             int minutes = lifetime / 60000;
-            return $":stopwatch: Message will self destruct in {minutes} minutes";
+            string plural = minutes > 1 ? "s" : "";
+            return $":stopwatch: Message will self destruct in {minutes} minute{plural}";
         }
 
         private async Task SafeDeleteMessage(DiscordChannel channel, DiscordMessage message)
@@ -493,5 +495,12 @@ namespace OpBot
             }
         }
 
+        public void Dispose()
+        {
+            if (_messageDeleter != null)
+            {
+                _messageDeleter.Dispose();
+            }
+        }
     }
 }

@@ -68,6 +68,29 @@ namespace OpBot
             }
         }
 
+        public static string DayOfWeekToDay(DayOfWeek dayOfWeek)
+        {
+            switch (dayOfWeek)
+            {
+                case DayOfWeek.Monday:
+                    return "MON";
+                case DayOfWeek.Tuesday:
+                    return "TUE";
+                case DayOfWeek.Wednesday:
+                    return "WED";
+                case DayOfWeek.Thursday:
+                    return "THU";
+                case DayOfWeek.Friday:
+                    return "FRI";
+                case DayOfWeek.Saturday:
+                    return "SAT";
+                case DayOfWeek.Sunday:
+                    return "SUN";
+                default:
+                    throw new ArgumentException("Unknown DayOfWeek");
+            }
+        }
+
         public static bool IsDayName(string dayName)
         {
             return _dayNames.Contains(dayName);

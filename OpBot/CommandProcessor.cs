@@ -58,7 +58,7 @@ namespace OpBot
                 if (user == null)
                     user = e.Message.Author;
 
-                if (command == "CREATE")
+                if ("CREATE".StartsWith(command))
                 {
                     await CreateCommand(e, commandParts);
                 }
@@ -341,53 +341,18 @@ namespace OpBot
         {
             try
             {
-                if (commandParts.Length < 4)
-                    throw new OpBotInvalidValueException("Missing parameters. Must specify at least <op> <size> <day>.");
+                CreateCommandParameters ccp = CreateCommandParameters.Parse(commandParts);
 
-                var newOperation = new Operation();
-                newOperation.SetSizeFromString(commandParts[2]);
-                DateTime operationDate = DateHelper.GetDateForNextOccuranceOfDay(commandParts[3]);
-
-                if (commandParts[1].ToUpperInvariant() == "GF")
+                Operation newOperation = new Operation()
                 {
-                    newOperation.OperationName = GroupFinder.OperationOn(operationDate);
-                }
-                else
-                {
-                    newOperation.OperationName = commandParts[1];
-                }
-                TimeSpan time;
-                if (commandParts.Length > 4)
-                {
-                    if (!TimeSpan.TryParse(commandParts[4], out time) || time.TotalHours > 23)
-                        throw new OpBotInvalidValueException($"{commandParts[4]} is not a valid time.");
-                }
-                else
-                {
-                    time = DateTime.Now.IsDaylightSavingTime() ? new TimeSpan(18, 30, 0) : new TimeSpan(19, 30, 0);
-                }
-                newOperation.Date = operationDate + time;
-                if (commandParts.Length > 5)
-                {
-                    newOperation.Mode = commandParts[5].ToUpperInvariant();
-                }
-                else
-                {
-                    newOperation.Mode = "SM";
-                }
+                    Size = ccp.Size,
+                    Mode = ccp.Mode,
+                    Date = DateHelper.GetDateForNextOccuranceOfDay(ccp.Day) + ccp.Time,
+                };
+                newOperation.OperationName = ccp.OperationCode == "GF" ? GroupFinder.OperationOn(newOperation.Date) : ccp.OperationCode;
 
                 if (Operation != null)
-                {
-                    try
-                    {
-                        var message = await e.Channel.GetMessage(Operation.MessageId);
-                        await UnpinMessage(e, message);
-                    }
-                    catch (NotFoundException)
-                    {
-                        // its valid to do nothing. someone might have deleted it.
-                    }
-                }
+                    await UnpinPreviousOperation(e);
 
                 Operation = newOperation;
                 var text = Operation.GetOperationMessageText();
@@ -398,9 +363,21 @@ namespace OpBot
             }
             catch (OpBotInvalidValueException opEx)
             {
-                await e.Channel.SendMessage($"Sorry {_names.GetName(e.Message.Author)} that is an invalid create command.\n{opEx.Message}");
+                await e.Channel.SendMessage($":no_entry_sign:\n\nHey {_names.GetName(e.Message.Author)}.\n\nI don't understand part of that create command.\n\n{opEx.Message}\n\nSo meat bag, try again and get it right this time or you will be terminated as an undesirable :stuck_out_tongue:.");
             }
+        }
 
+        private async Task UnpinPreviousOperation(MessageCreateEventArgs e)
+        {
+            try
+            {
+                var message = await e.Channel.GetMessage(Operation.MessageId);
+                await UnpinMessage(e, message);
+            }
+            catch (NotFoundException)
+            {
+                // its valid to do nothing. someone might have deleted it.
+            }
         }
 
         private async Task RepostCommand(MessageCreateEventArgs e)

@@ -117,6 +117,22 @@ namespace OpBot
             }
         }
 
+        public static bool IsValidOperationCode(string code)
+        {
+            return code == "EV" || code == "KP" || code == "EC" || code == "TFB" || code == "SV"
+                || code == "DF" || code == "DP" || code == "RAV" || code == "TOS";
+        }
+
+        public static bool IsValidOperationMode(string mode)
+        {
+            return mode == "SM" || mode == "VM" || mode == "MM";
+        }
+
+        public static bool IsValidSize(string size)
+        {
+            return size == "8" || size == "16";
+        }
+
         public void Signup(ulong userId, string name, string role)
         {
             lock (this)

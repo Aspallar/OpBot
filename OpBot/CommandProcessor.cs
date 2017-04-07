@@ -378,8 +378,15 @@ namespace OpBot
 
                 if (Operation != null)
                 {
-                    var message = await e.Channel.GetMessage(Operation.MessageId);
-                    await UnpinMessage(e, message);
+                    try
+                    {
+                        var message = await e.Channel.GetMessage(Operation.MessageId);
+                        await UnpinMessage(e, message);
+                    }
+                    catch (NotFoundException)
+                    {
+                        // its valid to do nothing. someone might have deleted it.
+                    }
                 }
 
                 Operation = newOperation;

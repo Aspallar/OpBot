@@ -17,6 +17,26 @@ namespace OpBot
         private ulong _messageId;
         private DateTime _date;
 
+        private static List<OperationDesc> _operationInfo = new List<OperationDesc>()
+        {
+            new OperationDesc() { ShortCode="EV", FullName = "Eternity Vault" },
+            new OperationDesc() { ShortCode="KP", FullName = "Karagga's Palace" },
+            new OperationDesc() { ShortCode="EC", FullName = "Explosive Conflict" },
+            new OperationDesc() { ShortCode="TFB", FullName = "Terror from Beyond" },
+            new OperationDesc() { ShortCode="SV", FullName = "Scum and Villainy" },
+            new OperationDesc() { ShortCode="DF", FullName = "The Dread Fortress" },
+            new OperationDesc() { ShortCode="DP", FullName = "The Dread Palace" },
+            new OperationDesc() { ShortCode="RAV", FullName = "The Ravagers" },
+            new OperationDesc() { ShortCode="TOS", FullName = "Temple of Sacrifice" },
+            new OperationDesc() { ShortCode="TY", FullName = "Tyth" },
+            new OperationDesc() { ShortCode="WB", FullName = "World Boss" },
+            new OperationDesc() { ShortCode="TC", FullName = "Toborro's Courtyard" },
+            new OperationDesc() { ShortCode="XEN", FullName = "Xenoanalyst II" },
+            new OperationDesc() { ShortCode="CM", FullName = "Colossal Monolith" },
+            new OperationDesc() { ShortCode="EYE", FullName = "The Eyeless" },
+            new OperationDesc() { ShortCode="OTH", FullName = "Other" },
+        };
+
         public Operation()
         {
             _members = new List<OperationMember>();
@@ -101,26 +121,15 @@ namespace OpBot
 
         public static string GetFullName(string shortCode)
         {
-            switch (shortCode.ToUpperInvariant())
-            {
-                case "EV": return "Eternity Vault";
-                case "KP": return "Karagga's Palace";
-                case "EC": return "Explosive Conflict";
-                case "TFB": return "Terror From Beyond";
-                case "SV": return "Scum and Villainy";
-                case "DF": return "The Dread Fortress";
-                case "DP": return "The Dread Palace";
-                case "RAV": return "The Ravagers";
-                case "TOS": return "Temple of Sacrifice";
-                default:
-                    throw new OpBotInvalidValueException($"Unknown operation name '{shortCode}'");
-            }
+            OperationDesc op = _operationInfo.Where(x => x.ShortCode == shortCode).SingleOrDefault();
+            if (op == null)
+                throw new OpBotInvalidValueException($"Unknown operation '{shortCode}'");
+            return op.FullName;
         }
 
         public static bool IsValidOperationCode(string code)
         {
-            return code == "EV" || code == "KP" || code == "EC" || code == "TFB" || code == "SV"
-                || code == "DF" || code == "DP" || code == "RAV" || code == "TOS";
+            return _operationInfo.Any(x => x.ShortCode == code);
         }
 
         public static bool IsValidOperationMode(string mode)

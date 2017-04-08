@@ -42,7 +42,7 @@ namespace OpBot
             {
                 TimeSpan time;
                 if (!TimeSpan.TryParse(part, out time))
-                    throw new OpBotInvalidValueException($"Invalid create parameter\"{part}\".");
+                    throw new OpBotInvalidValueException($"Create parameter \"{part}\" does not compute.");
                 if (time.TotalHours > 23)
                     throw new OpBotInvalidValueException($"{part} is not a valid time.");
                 ccp.Time = time;

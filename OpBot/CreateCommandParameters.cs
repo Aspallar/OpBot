@@ -22,8 +22,6 @@ namespace OpBot
 
         private static void ParsePart(CreateCommandParameters ccp, string part)
         {
-            TimeSpan time;
-
             if (DateHelper.IsDayName(part))
             {
                 ccp.Day = part;
@@ -42,6 +40,7 @@ namespace OpBot
             }
             else
             {
+                TimeSpan time;
                 if (!TimeSpan.TryParse(part, out time))
                     throw new OpBotInvalidValueException($"Invalid create parameter\"{part}\".");
                 if (time.TotalHours > 23)

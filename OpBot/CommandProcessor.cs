@@ -396,7 +396,7 @@ namespace OpBot
             Operation.MessageId = newOperationMessage.ID;
             await PinMessage(e, newOperationMessage);
             if (previousOperationMessage != null)
-                await previousOperationMessage?.Delete();
+                await previousOperationMessage.Delete();
             _repository.Save(Operation);
         }
 

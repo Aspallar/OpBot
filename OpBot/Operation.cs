@@ -237,13 +237,14 @@ namespace OpBot
             sb.Append(baseTime.AddHours(2).ToShortTimeString());
             sb.AppendLine(" Eastern Europe (Estonia)*");
 
-            sb.AppendLine("```Tanks:");
+            sb.Append(DiscordText.CodeBlock);
+            sb.AppendLine("Tanks:");
             sb.Append(RolesToString("TANK"));
             sb.AppendLine("Damage:");
             sb.Append(RolesToString("DPS"));
             sb.AppendLine("Healers:");
             sb.Append(RolesToString("HEAL"));
-            sb.Append("```");
+            sb.Append(DiscordText.CodeBlock);
 
             if (_altRoles.Count > 0)
             {
@@ -280,14 +281,14 @@ namespace OpBot
         {
             int padding = _altRoles.Max(x => x.Name.Length) + 1;
             StringBuilder sb = new StringBuilder(512);
-            sb.Append("```");
+            sb.Append(DiscordText.CodeBlock);
             foreach (AltRole role in _altRoles)
             {
                 sb.Append(role.Name.PadRight(padding));
                 sb.Append(' ');
                 sb.Append(role.ToString());
             }
-            sb.AppendLine("```");
+            sb.AppendLine(DiscordText.CodeBlock);
             return sb.ToString();
         }
 

@@ -71,6 +71,7 @@
     <Compile Include="Constants.cs" />
     <Compile Include="CreateCommandParameters.cs" />
     <Compile Include="DateHelper.cs" />
+    <Compile Include="DiscordText.cs" />
     <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="Greeting.cs" />
     <Compile Include="GroupFinder.cs" />

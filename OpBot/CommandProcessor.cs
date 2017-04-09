@@ -106,6 +106,14 @@ namespace OpBot
                 {
                     await NoOperationCommand(e);
                 }
+                else if (command == "BIGTEXT")
+                {
+                    await BigTextCommand(e, commandParts);
+                }
+                else if (command == "OFFLINE")
+                {
+                    await OfflineCommand(e, commandParts);
+                }
                 else if (command == "PURGE")
                 {
                     await PurgeCommand(e);
@@ -118,6 +126,54 @@ namespace OpBot
 
         }
 
+        private async Task OfflineCommand(MessageCreateEventArgs e, string[] commandParts)
+        {
+            string text;
+            if (commandParts.Length == 1)
+            {
+                text = "I will be back as soon as possible.";
+            }
+            else if (commandParts[1].IndexOf(':') > -1)
+            {
+                TimeSpan time;
+                if (!TimeSpan.TryParse(commandParts[1], out time) || time.TotalHours > 23)
+                {
+                    await e.Channel.SendMessage($"{commandParts[1]} is not a valid time.");
+                    return;
+                }
+                text = $"I will be back around {commandParts[1]} (UTC)";
+            }
+            else
+            {
+                int minutes;
+                if (!int.TryParse(commandParts[1], out minutes))
+                {
+                    await e.Channel.SendMessage($"{commandParts[1]} is not a valid number of minutes.");
+                    return;
+                }
+                TimeSpan duration = new TimeSpan(0, minutes, 0);
+                text = $"I will be back in approximately ";
+                if (duration.Days > 0)
+                    text += duration.Days.ToString() + " days ";
+                if (duration.Hours > 0)
+                    text += duration.Hours.ToString() + " hours ";
+                if (duration.Minutes > 0)
+                    text += duration.Minutes.ToString() + " minutes ";
+            }
+            string fullText = $"{DiscordText.BigText("offline")}\n\nI am going offline for a while.\n\n{text}\n\nLove you all {DiscordText.Kiss}";
+            await e.Channel.SendMessage(fullText);
+        }
+
+        private async Task BigTextCommand(MessageCreateEventArgs e, string[] commandParts)
+        {
+            await SafeDeleteMessage(e.Channel, e.Message);
+            for (int k = 1; k < commandParts.Length; k++)
+            {
+                DiscordMessage message = await e.Channel.SendMessage(DiscordText.BigText(commandParts[k]));
+                _messageDeleter.AddMessage(message, 60000);
+            }
+        }
+
         private async Task NoOperationCommand(MessageCreateEventArgs e)
         {
             if (!CheckForOperation(e))
@@ -126,7 +182,7 @@ namespace OpBot
             await UnpinPreviousOperation(e);
             Operation = null;
             _repository.Save(Operation);
-            await e.Channel.SendMessage(":ok_hand:");
+            await e.Channel.SendMessage($"{DiscordText.OkHand} {DiscordText.BigText("done")}");
         }
 
         private async Task AltCommand(MessageCreateEventArgs e, string[] commandParts, DiscordUser user)
@@ -161,9 +217,9 @@ namespace OpBot
             List<TimeZoneTime> times = TimeZones.GetZoneTimes(Operation.Date);
             string timesMessage = TimeZones.ToString(times);
             StringBuilder messageText = new StringBuilder(timesMessage.Length + 80);
-            messageText.Append("```");
+            messageText.Append(DiscordText.CodeBlock);
             messageText.Append(timesMessage);
-            messageText.AppendLine("```");
+            messageText.AppendLine(DiscordText.CodeBlock);
             messageText.Append(GetSelfDestructText(messageLifetime));
             Console.WriteLine($"Message length: {messageText.Length}");
             DiscordMessage message = await e.Channel.SendMessage(messageText.ToString());
@@ -273,7 +329,7 @@ namespace OpBot
             StringBuilder msg = new StringBuilder("Group Finder Operations for the next ", 512);
             msg.Append(days);
             msg.AppendLine(" days are");
-            msg.AppendLine("```");
+            msg.AppendLine(DiscordText.CodeBlock);
             foreach (string opCode in ops)
             {
                 msg.Append(dt.ToString("ddd"));
@@ -282,7 +338,7 @@ namespace OpBot
                 msg.AppendLine(Operation.GetFullName(opCode));
                 dt = dt.AddDays(1);
             }
-            msg.AppendLine("```");
+            msg.AppendLine(DiscordText.CodeBlock);
             msg.Append(GetSelfDestructText(messageLifetime));
             DiscordMessage message = await e.Channel.SendMessage(msg.ToString());
             _messageDeleter.AddMessage(message, messageLifetime);
@@ -378,7 +434,7 @@ namespace OpBot
             }
             catch (OpBotInvalidValueException opEx)
             {
-                await e.Channel.SendMessage($":no_entry_sign:\n\nHey {_names.GetName(e.Message.Author)}.\n\nI don't understand part of that create command.\n\n{opEx.Message}\n\nSo meat bag, try again and get it right this time or you will be terminated as an undesirable :stuck_out_tongue:.");
+                await e.Channel.SendMessage($"{DiscordText.NoEntry}\n\nHey {_names.GetName(e.Message.Author)}.\n\nI don't understand part of that create command.\n\n{opEx.Message}\n\nSo meat bag, try again and get it right this time or you will be terminated as an undesirable :stuck_out_tongue:.");
             }
         }
 
@@ -478,7 +534,7 @@ namespace OpBot
         {
             int minutes = lifetime / 60000;
             string plural = minutes > 1 ? "s" : "";
-            return $":stopwatch: Message will self destruct in {minutes} minute{plural}";
+            return $"{DiscordText.Stopwatch} Message will self destruct in {minutes} minute{plural}";
         }
 
         private async Task SafeDeleteMessage(DiscordChannel channel, DiscordMessage message)
@@ -493,7 +549,7 @@ namespace OpBot
             }
             catch (UnauthorizedException)
             {
-                await channel.SendMessage($":warning: Warning!\n\nMy diodes are hurting because I do not appear to have the \"Manage Messages\" permission. This is required for me to operate properly, please assign me a role that has the \"Manage Messages\" permission.");
+                await channel.SendMessage($"{DiscordText.Warning} Warning!\n\nMy diodes are hurting because I do not appear to have the \"Manage Messages\" permission. This is required for me to operate properly, please assign me a role that has the \"Manage Messages\" permission.");
             }
         }
 

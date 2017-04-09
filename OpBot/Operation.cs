@@ -210,49 +210,76 @@ namespace OpBot
 
         public string GetOperationMessageText()
         {
+            StringBuilder sb = new StringBuilder(1024);
             DateTime baseTime = _date.IsDaylightSavingTime() ? _date.AddHours(1) : _date;
-            string text = $"**{OperationName}** {Size}-man {Mode}\n{_date.ToString("dddd")} {_date.ToLongDateString()} {_date.ToShortTimeString()} (UTC)\n";
-            text += "  *" + baseTime.ToShortTimeString() + " Western Europe (UK)*\n";
-            text += "  *" + baseTime.AddHours(1).ToShortTimeString() + " Central Europe (Belgium)*\n";
-            text += "  *" + baseTime.AddHours(2).ToShortTimeString() + " Eastern Europe (Estonia)*\n";
-            text += "```";
-            text += "Tanks:\n";
-            text += RolesToString("TANK");
-            text += "Damage:\n";
-            text += RolesToString("DPS");
-            text += "Healers:\n";
-            text += RolesToString("HEAL");
-            text += "```";
+
+            sb.Append("**");
+            sb.Append(OperationName);
+            sb.Append("** ");
+            sb.Append(Size);
+            sb.Append("-man ");
+            sb.AppendLine(Mode);
+
+            sb.Append(_date.ToLongDateString());
+            sb.Append(' ');
+            sb.Append(_date.ToShortTimeString());
+            sb.AppendLine(" (UTC)");
+
+            sb.Append("  *");
+            sb.Append(baseTime.ToShortTimeString());
+            sb.AppendLine(" Western Europe (UK)*");
+
+            sb.Append("  *");
+            sb.Append(baseTime.AddHours(1).ToShortTimeString());
+            sb.AppendLine(" Central Europe (Belgium)*");
+
+            sb.Append("  *");
+            sb.Append(baseTime.AddHours(2).ToShortTimeString());
+            sb.AppendLine(" Eastern Europe (Estonia)*");
+
+            sb.AppendLine("```Tanks:");
+            sb.Append(RolesToString("TANK"));
+            sb.AppendLine("Damage:");
+            sb.Append(RolesToString("DPS"));
+            sb.AppendLine("Healers:");
+            sb.Append(RolesToString("HEAL"));
+            sb.Append("```");
+
             if (_altRoles.Count > 0)
             {
-                text += $"\nAlternative/Reserve Roles {AltRolesToString()}";
+                sb.Append("\nAlternative/Reserve Roles ");
+                sb.Append(AltRolesToString());
             }
+
             if (_notes.Count > 0)
-                text += "\n";
-            foreach (string note in _notes)
             {
-                text += note + "\n";
+                sb.AppendLine();
+                foreach (string note in _notes)
+                    sb.AppendLine(note);
             }
-            return text;
+
+            return sb.ToString();
         }
 
         private string RolesToString(string primaryRole)
         {
+            StringBuilder sb = new StringBuilder(512);
             int count = 0;
-            string text = "";
             var roleMembers = _members.Where(m => m.PrimaryRole == primaryRole).ToList();
             foreach (var member in roleMembers)
             {
-                ++count;
-                text += $"    {count.ToString()}. {member.UserName}\n";
+                sb.Append("    ");
+                sb.Append(++count);
+                sb.Append(". ");
+                sb.AppendLine(member.UserName);
             }
-            return text;
+            return sb.ToString();
         }
 
         private string AltRolesToString()
         {
             int padding = _altRoles.Max(x => x.Name.Length) + 1;
-            StringBuilder sb = new StringBuilder(1024);
+            StringBuilder sb = new StringBuilder(512);
             sb.Append("```");
             foreach (AltRole role in _altRoles)
             {

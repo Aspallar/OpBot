@@ -98,13 +98,17 @@ namespace OpBot
                 {
                     await RaidTimesCommand(e);
                 }
-                else if (command == "PURGE")
-                {
-                    await PurgeCommand(e);
-                }
                 else if (command == "EDIT")
                 {
                     await EditCommand(e, commandParts);
+                }
+                else if (command == "NO" && commandParts.Length == 2 && commandParts[1].ToUpperInvariant() == "OPERATION")
+                {
+                    await NoOperationCommand(e);
+                }
+                else if (command == "PURGE")
+                {
+                    await PurgeCommand(e);
                 }
                 else
                 {
@@ -112,6 +116,17 @@ namespace OpBot
                 }
             }
 
+        }
+
+        private async Task NoOperationCommand(MessageCreateEventArgs e)
+        {
+            if (!CheckForOperation(e))
+                return;
+
+            await UnpinPreviousOperation(e);
+            Operation = null;
+            _repository.Save(Operation);
+            await e.Channel.SendMessage(":ok_hand:");
         }
 
         private async Task AltCommand(MessageCreateEventArgs e, string[] commandParts, DiscordUser user)
@@ -212,7 +227,7 @@ namespace OpBot
                 }
                 else if (param.IndexOf(":") > 0 
                     && TimeSpan.TryParse(param, out time)
-                    && time.Hours <= 23)
+                    && time.TotalHours <= 23)
                 {
                     Operation.Date = Operation.Date.Date + time;
                 }
@@ -382,6 +397,9 @@ namespace OpBot
 
         private async Task RepostCommand(MessageCreateEventArgs e)
         {
+            if (!CheckForOperation(e))
+                return;
+
             DiscordMessage previousOperationMessage;
 
             try
@@ -448,7 +466,7 @@ namespace OpBot
         {
             if (Operation == null)
             {
-                e.Channel.SendMessage($"Sorry {_names.GetName(e.Message.Author)}. I cannot do that as there is no current operation")
+                e.Channel.SendMessage($"Sorry {_names.GetName(e.Message.Author)}. I cannot do that as there is no current operation.")
                     .GetAwaiter()
                     .GetResult();
                 return false;

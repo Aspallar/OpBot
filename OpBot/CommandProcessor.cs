@@ -177,7 +177,7 @@ namespace OpBot
             }
             string fullText = $"{DiscordText.BigText("offline")}\n\nI am going offline for a while.\n\n{text}\n\nLove you all {DiscordText.Kiss}";
             await e.Channel.SendMessage(fullText);
-        }
+        }4
 
         private async Task BigTextCommand(MessageCreateEventArgs e, string[] commandParts)
         {
@@ -241,8 +241,6 @@ namespace OpBot
             if (!CheckForOperation(e))
                 return;
 
-            // TODO: remove this log message
-            Console.WriteLine($"RaidTimesCommand invoked by {_names.GetName(e.Message.Author)}");
             List<TimeZoneTime> times = TimeZones.GetZoneTimes(Operation.Date);
             string timesMessage = TimeZones.ToString(times);
             StringBuilder messageText = new StringBuilder(timesMessage.Length + 80);

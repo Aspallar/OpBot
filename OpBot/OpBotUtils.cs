@@ -9,7 +9,7 @@ namespace OpBot
         public static string GetVersionText()
         {
             Version version = Assembly.GetExecutingAssembly().GetName().Version;
-            string text = $"OpBot Version: {version.Major}.{version.Minor}.{version.Build}";
+            string text = $"{version.Major}.{version.Minor}.{version.Build}";
             return text;
         }
 

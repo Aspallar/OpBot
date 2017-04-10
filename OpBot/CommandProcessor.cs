@@ -84,7 +84,7 @@ namespace OpBot
                 }
                 else if (command == "VER" || command == "VERSION")
                 {
-                    await e.Channel.SendMessage(OpBotUtils.GetVersionText());
+                    await VersionCommand(e);
                 }
                 else if (command == "GF")
                 {
@@ -128,6 +128,12 @@ namespace OpBot
                 }
             }
 
+        }
+
+        private async Task VersionCommand(MessageCreateEventArgs e)
+        {
+            string text = DiscordText.BigText("version") + "   " + DiscordText.BigText(OpBotUtils.GetVersionText());
+            await e.Channel.SendMessage(text);
         }
 
         private async Task BackCommand(MessageCreateEventArgs e, string[] commandParts)
@@ -427,9 +433,10 @@ namespace OpBot
         {
             if (!CheckForOperation(e))
                 return;
+
             if (commandParts.Length > 1)
             {
-                string text = string.Join(" ", commandParts, 1, commandParts.Length - 1);
+                string text = $"{string.Join(" ", commandParts, 1, commandParts.Length - 1)} *({_names.GetName(e.Message.Author)})*";
                 Operation.AddNote(text);
             }
             await UpdateOperationMessage(e.Channel);
@@ -465,8 +472,8 @@ namespace OpBot
                     await UnpinPreviousOperation(e);
 
                 Operation = newOperation;
-                var text = Operation.GetOperationMessageText();
-                var newOpMessage = await e.Channel.SendMessage(text);
+                string text = Operation.GetOperationMessageText();
+                DiscordMessage newOpMessage = await e.Channel.SendMessage(text);
                 Operation.MessageId = newOpMessage.ID;
                 await PinMessage(e, newOpMessage);
                 _repository.Save(Operation);

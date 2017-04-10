@@ -114,6 +114,10 @@ namespace OpBot
                 {
                     await OfflineCommand(e, commandParts);
                 }
+                else if (command == "BACK" || command == "BK")
+                {
+                    await BackCommand(e, commandParts);
+                }
                 else if (command == "PURGE")
                 {
                     await PurgeCommand(e);
@@ -126,8 +130,19 @@ namespace OpBot
 
         }
 
+        private async Task BackCommand(MessageCreateEventArgs e, string[] commandParts)
+        {
+            if (!CheckIsAdminUser(e, "BACK"))
+                return;
+
+            await e.Channel.SendMessage($"{DiscordText.BigText("I  AM  BACK")}\n\nI am back online and awaiting your commands.");
+        }
+
         private async Task OfflineCommand(MessageCreateEventArgs e, string[] commandParts)
         {
+            if (!CheckIsAdminUser(e, "OFFLINE"))
+                return;
+
             string text;
             if (commandParts.Length == 1)
             {
@@ -166,11 +181,25 @@ namespace OpBot
 
         private async Task BigTextCommand(MessageCreateEventArgs e, string[] commandParts)
         {
+            if (!CheckIsAdminUser(e, "BIGTEXT") || commandParts.Length <= 1)
+                return;
+
             await SafeDeleteMessage(e.Channel, e.Message);
-            for (int k = 1; k < commandParts.Length; k++)
+
+            bool autoDelete = true;
+            int start = 1;
+
+            if (commandParts[1].ToUpperInvariant() == "-PERM")
+            {
+                autoDelete = false;
+                start = 2;
+            }
+
+            for (int k = start; k < commandParts.Length; k++)
             {
                 DiscordMessage message = await e.Channel.SendMessage(DiscordText.BigText(commandParts[k]));
-                _messageDeleter.AddMessage(message, 60000);
+                if (autoDelete)
+                    _messageDeleter.AddMessage(message, 30000);
             }
         }
 
@@ -326,7 +355,10 @@ namespace OpBot
             }
             List<string> ops = GroupFinder.NextDays(days);
             DateTime dt = DateTime.Now.Date;
-            StringBuilder msg = new StringBuilder("Group Finder Operations for the next ", 512);
+            StringBuilder msg = new StringBuilder(512);
+            msg.AppendLine(DiscordText.BigText("group  finder"));
+            msg.AppendLine();
+            msg.Append("Operations for the next ");
             msg.Append(days);
             msg.AppendLine(" days are");
             msg.AppendLine(DiscordText.CodeBlock);
@@ -347,11 +379,8 @@ namespace OpBot
 
         private async Task PurgeCommand(MessageCreateEventArgs e)
         {
-            if (!_adminUsers.IsAdmin(e.Message.Author.ID))
-            {
-                await e.Channel.SendMessage("You need to be an admin user to use the PURGE command.");
+            if (!CheckIsAdminUser(e, "PURGE"))
                 return;
-            }
 
             var messages = await e.Channel.GetMessages();
             foreach (var message in messages)
@@ -374,6 +403,18 @@ namespace OpBot
                     await Task.Delay(1500);
                 }
             }
+        }
+
+        private bool CheckIsAdminUser(MessageCreateEventArgs e, string commandName)
+        {
+            if (!_adminUsers.IsAdmin(e.Message.Author.ID))
+            {
+                e.Channel.SendMessage($"{DiscordText.BigText("oops")}\n\n{_names.GetName(e.Message.Author)} you are not an administrator.\n\nYou need to be an administrator to use the *{commandName}* command.")
+                    .GetAwaiter()
+                    .GetResult();
+                return false;
+            }
+            return true;
         }
 
         private async Task RemoveCommand(MessageCreateEventArgs e, DiscordUser user)

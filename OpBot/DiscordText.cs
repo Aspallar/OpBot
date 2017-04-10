@@ -8,7 +8,7 @@ namespace OpBot
 {
     internal static class DiscordText
     {
-        private static string[] _numbers = { ":zero:", ":one:", ":two:", ":three:", ":four:", ":five:", ":six:", ":seven:", ":eight:", ":nine:" };
+        private static string[] _digits = { ":zero:", ":one:", ":two:", ":three:", ":four:", ":five:", ":six:", ":seven:", ":eight:", ":nine:" };
 
         public const string Kiss = ":kiss:";
         public const string OkHand = ":ok_hand:";
@@ -19,13 +19,13 @@ namespace OpBot
 
         public static string BigText(string text)
         {
-            const int letterPosition = 20; // index of x in regionalIndicator
+            const int letterPosition = 20; // position of x in regionalIndicator
             StringBuilder regionalIndicator = new StringBuilder(":regional_indicator_x:");
             StringBuilder bigtext = new StringBuilder(regionalIndicator.Length * text.Length);
             foreach (char ch in text)
             {
-                int numberIndex = "0123456789".IndexOf(ch);
-                if ( numberIndex == -1)
+                int digitIndex = "0123456789".IndexOf(ch);
+                if (digitIndex == -1)
                 {
                     char lowerCh = char.ToLowerInvariant(ch);
                     if ("abcdefghijklmnopqrstuvwxyz".IndexOf(lowerCh) >= 0)
@@ -40,7 +40,7 @@ namespace OpBot
                 }
                 else
                 {
-                    bigtext.Append(_numbers[numberIndex]);
+                    bigtext.Append(_digits[digitIndex]);
                 }
             }
             return bigtext.ToString();

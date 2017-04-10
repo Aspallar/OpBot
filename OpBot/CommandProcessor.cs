@@ -177,7 +177,7 @@ namespace OpBot
             }
             string fullText = $"{DiscordText.BigText("offline")}\n\nI am going offline for a while.\n\n{text}\n\nLove you all {DiscordText.Kiss}";
             await e.Channel.SendMessage(fullText);
-        }4
+        }
 
         private async Task BigTextCommand(MessageCreateEventArgs e, string[] commandParts)
         {

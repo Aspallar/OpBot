@@ -17,7 +17,6 @@ namespace OpBot
         private readonly IAdminUser _adminUsers;
         private readonly MessageDeleter _messageDeleter;
 
-
         public Operation Operation { get; private set; }
 
         public CommandProcessor(CommandProcessorConfig config)
@@ -40,7 +39,7 @@ namespace OpBot
         {
             if (e.Message.Mentions.Count > 2)
             {
-                await e.Channel.SendMessage("Sorry. There were too many mentions in that command.");
+                await SendError(e, "There were too many mentions in that command.\n");
                 return;
             }
 
@@ -48,7 +47,7 @@ namespace OpBot
 
             if (commandParts.Length == 0)
             {
-                await e.Channel.SendMessage($"Hey {_names.GetName(e.Message.Author)}. My instructions are here <{Constants.InstrucionUrl}>");
+                await ShowInstructions(e);
             }
             else
             {
@@ -124,7 +123,7 @@ namespace OpBot
                 }
                 else
                 {
-                    await e.Channel.SendMessage($"I'm sorry {_names.GetName(e.Message.Author)} but I don't understand that command.");
+                    await SendError(e, $"That is not a command that I recognize.");
                 }
             }
 
@@ -132,7 +131,7 @@ namespace OpBot
 
         private async Task VersionCommand(MessageCreateEventArgs e)
         {
-            string text = DiscordText.BigText("version") + "   " + DiscordText.BigText(OpBotUtils.GetVersionText());
+            string text = "Version: " + DiscordText.BigText(OpBotUtils.GetVersionText());
             await e.Channel.SendMessage(text);
         }
 
@@ -159,7 +158,7 @@ namespace OpBot
                 TimeSpan time;
                 if (!TimeSpan.TryParse(commandParts[1], out time) || time.TotalHours > 23)
                 {
-                    await e.Channel.SendMessage($"{commandParts[1]} is not a valid time.");
+                    await SendError(e, $"{commandParts[1]} is not a valid time.");
                     return;
                 }
                 text = $"I will be back around {commandParts[1]} (UTC)";
@@ -169,7 +168,7 @@ namespace OpBot
                 int minutes;
                 if (!int.TryParse(commandParts[1], out minutes))
                 {
-                    await e.Channel.SendMessage($"{commandParts[1]} is not a valid number of minutes.");
+                    await SendError(e, $"{commandParts[1]} is not a valid number of minutes.");
                     return;
                 }
                 TimeSpan duration = new TimeSpan(0, minutes, 0);
@@ -190,7 +189,7 @@ namespace OpBot
             if (!CheckIsAdminUser(e, "BIGTEXT") || commandParts.Length <= 1)
                 return;
 
-            await SafeDeleteMessage(e.Channel, e.Message);
+            await SafeDeleteMessage(e);
 
             bool autoDelete = true;
             int start = 1;
@@ -232,7 +231,7 @@ namespace OpBot
             }
             catch (OpBotInvalidValueException ex)
             {
-                await e.Channel.SendMessage($"Sorry {_names.GetName(e.Message.Author)}.\n {ex.Message}");
+                await SendError(e, ex.Message);
             }
         }
 
@@ -257,14 +256,14 @@ namespace OpBot
             Console.WriteLine($"Message length: {messageText.Length}");
             DiscordMessage message = await e.Channel.SendMessage(messageText.ToString());
             _messageDeleter.AddMessage(message, messageLifetime);
-            await SafeDeleteMessage(e.Channel, e.Message);
+            await SafeDeleteMessage(e);
         }
 
         private async Task DeleteNoteCommand(MessageCreateEventArgs e, string[] commandParts)
         {
             if (commandParts.Length != 2)
             {
-                await e.Channel.SendMessage("Specify a note number or * for all notes");
+                await SendError(e, "You should only specify a note number.");
                 return;
             }
             if (commandParts[1] == "*")
@@ -277,7 +276,7 @@ namespace OpBot
 
                 if (!int.TryParse(commandParts[1], out noteNumber) || noteNumber < 1 || noteNumber > Operation.NoteCount)
                 {
-                    await e.Channel.SendMessage("Specify a note number or * for all notes");
+                    await SendError(e, "I'm afraid that's not a valid note number.");
                     return;
                 }
                 Operation.DeleteNote(noteNumber - 1);
@@ -292,12 +291,12 @@ namespace OpBot
 
             if (commandParts.Length == 1)
             {
-                await e.Channel.SendMessage($"Edit what {_names.GetName(e.Message.Author)}?");
+                await SendError(e, "What do you want me to edit?\n\nSpecify a new operation, size, day, time or mode\n\ne.g\n   edit 18:00\n   edit RAV");
                 return;
             }
             else if (commandParts.Length > 2)
             {
-                await e.Channel.SendMessage($"One edit item at a time please {_names.GetName(e.Message.Author)}.");
+                await SendError(e, $"You can only specify one edit item at a time.");
                 return;
             }
 
@@ -333,7 +332,7 @@ namespace OpBot
             }
             catch (OpBotInvalidValueException)
             {
-                await e.Channel.SendMessage($"Sorry {_names.GetName(e.Message.Author)}. I don't understand what you mean by {param}.");
+                await SendError(e, $"I don't understand what you mean by {param}.");
             }
         }
 
@@ -344,7 +343,7 @@ namespace OpBot
             int days = 7;
             if (commandParts.Length > 2)
             {
-                await e.Channel.SendMessage($"Invalid GF command");
+                await SendError(e, $"That is too many parameters for a GF command.");
                 return;
             }
             if (commandParts.Length == 2)
@@ -352,7 +351,7 @@ namespace OpBot
                 string dayString = commandParts[1];
                 if (!int.TryParse(dayString, out days))
                 {
-                    await e.Channel.SendMessage($"{dayString} is not a number");
+                    await SendError(e, $"{dayString} is not a number.");
                     return;
                 }
                 if (days > 14) days = 14;
@@ -378,7 +377,7 @@ namespace OpBot
             msg.Append(GetSelfDestructText(messageLifetime));
             DiscordMessage message = await e.Channel.SendMessage(msg.ToString());
             _messageDeleter.AddMessage(message, messageLifetime);
-            await SafeDeleteMessage(e.Channel, e.Message);
+            await SafeDeleteMessage(e);
         }
 
         private async Task PurgeCommand(MessageCreateEventArgs e)
@@ -401,7 +400,7 @@ namespace OpBot
                     }
                     catch (UnauthorizedException)
                     {
-                        await e.Channel.SendMessage(NeedManagePermission("purge messages"));
+                        await SendError(e, NeedManagePermission("purge messages"));
                         break; // foreach
                     }
                     await Task.Delay(1500);
@@ -413,7 +412,7 @@ namespace OpBot
         {
             if (!_adminUsers.IsAdmin(e.Message.Author.ID))
             {
-                e.Channel.SendMessage($"{DiscordText.BigText("oops")}\n\n{_names.GetName(e.Message.Author)} you are not an administrator.\n\nYou need to be an administrator to use the *{commandName}* command.")
+                SendError(e, $"You are not an administrator.\n\nYou need to be an administrator to use the *{commandName}* command.")
                     .GetAwaiter()
                     .GetResult();
                 return false;
@@ -480,7 +479,7 @@ namespace OpBot
             }
             catch (OpBotInvalidValueException opEx)
             {
-                await e.Channel.SendMessage($"{DiscordText.NoEntry}\n\nHey {_names.GetName(e.Message.Author)}.\n\nI don't understand part of that create command.\n\n{opEx.Message}\n\nSo meat bag, try again and get it right this time or you will be terminated as an undesirable :stuck_out_tongue:.");
+                await SendError(e, $"I don't understand part of that create command.\n\n{opEx.Message}\n\nSo meat bag, try again and get it right this time or you will be terminated as an undesirable {DiscordText.StuckOutTongue}.");
             }
         }
 
@@ -529,7 +528,7 @@ namespace OpBot
             }
             catch (UnauthorizedException)
             {
-                await e.Channel.SendMessage($"Sorry {_names.GetName(e.Message.Author)}. {NeedManagePermission("pin the operation")}");
+                await SendError(e, NeedManagePermission("pin the operation"));
             }
         }
 
@@ -541,13 +540,13 @@ namespace OpBot
             }
             catch (UnauthorizedException)
             {
-                await e.Channel.SendMessage($"Sorry {_names.GetName(e.Message.Author)}. {NeedManagePermission("unpin the previous operation")}");
+                await SendError(e, NeedManagePermission("unpin the previous operation"));
             }
         }
 
         private static string NeedManagePermission(string actionText)
         {
-            return $"I am unable to {actionText} as I need the 'manage messages' permission to do so. Please do so manually and get my permissions fixed.";
+            return $"I am unable to {actionText} as I do not appear to have the necessary 'Manage Messages' permission.";
         }
 
         private async Task UpdateOperationMessage(DiscordChannel channel)
@@ -568,7 +567,7 @@ namespace OpBot
         {
             if (Operation == null)
             {
-                e.Channel.SendMessage($"Sorry {_names.GetName(e.Message.Author)}. I cannot do that as there is no current operation.")
+                SendError(e, "I cannot execute that command because there is no current operation.")
                     .GetAwaiter()
                     .GetResult();
                 return false;
@@ -583,11 +582,11 @@ namespace OpBot
             return $"{DiscordText.Stopwatch} Message will self destruct in {minutes} minute{plural}";
         }
 
-        private async Task SafeDeleteMessage(DiscordChannel channel, DiscordMessage message)
+        private async Task SafeDeleteMessage(MessageCreateEventArgs e)
         {
             try
             {
-                await message.Delete();
+                await e.Message.Delete();
             }
             catch (NotFoundException)
             {
@@ -595,9 +594,43 @@ namespace OpBot
             }
             catch (UnauthorizedException)
             {
-                await channel.SendMessage($"{DiscordText.Warning} Warning!\n\nMy diodes are hurting because I do not appear to have the \"Manage Messages\" permission. This is required for me to operate properly, please assign me a role that has the \"Manage Messages\" permission.");
+                await SendError(e, NeedManagePermission("delete message"));
             }
         }
+
+        private async Task SendError(MessageCreateEventArgs e, string errorText)
+        {
+            DiscordEmbed errorEmbed = new DiscordEmbed()
+            {
+                Color = 0xad1313,
+                Title = "Error",
+                Url = Constants.InstrucionUrl,
+                Thumbnail = new DiscordEmbedThumbnail()
+                {
+                    Url = "https://raw.githubusercontent.com/wiki/Aspallar/OpBot/images/2-128.png",
+                },
+                Description = $"I'm very sorry {_names.GetName(e.Message.Author)} but...\n" + errorText,
+            };
+            await e.Message.Respond("", embed: errorEmbed);
+        }
+
+
+        private async Task ShowInstructions(MessageCreateEventArgs e)
+        {
+            DiscordEmbed instructionEmbed = new DiscordEmbed()
+            {
+                Color = 0xad1313,
+                Title = "List of Commands",
+                Url = Constants.InstrucionUrl,
+                Thumbnail = new DiscordEmbedThumbnail()
+                {
+                    Url = "https://raw.githubusercontent.com/wiki/Aspallar/OpBot/images/2-128.png",
+                },
+                Description = $"Hey {_names.GetName(e.Message.Author)}.\n\nI manage operations and other events here.\n\n You can view a full list of my commands by clicking on the title above."
+            };
+            await e.Message.Respond("", embed: instructionEmbed);
+        }
+
 
         public void Dispose()
         {

@@ -58,6 +58,7 @@ namespace OpBot
             _client.GuildAvailable += Client_GuildAvailable;
             _client.GuildMemberAdd += Client_GuildMemberAdd;
             _client.GuildMemberUpdate += Client_GuildMemberUpdate;
+            _client.Ready += Client_Ready;
 
             try
             {
@@ -75,6 +76,11 @@ namespace OpBot
             //operationRepository.Save(_commandProcessor.Operation);
 
             _client.Dispose();
+        }
+
+        private async Task Client_Ready()
+        {
+            await _client.UpdateStatus("Star Wars: The Old Republic");
         }
 
         private async Task Client_MessageCreated(MessageCreateEventArgs e)

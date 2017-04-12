@@ -16,6 +16,7 @@ namespace OpBot
         public const string Stopwatch = ":stopwatch:";
         public const string NoEntry = ":no_entry_sign:";
         public const string CodeBlock = "```";
+        public const string StuckOutTongue = ":stuck_out_tongue:";
 
         public static string BigText(string text)
         {

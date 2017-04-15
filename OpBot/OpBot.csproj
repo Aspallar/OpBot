@@ -69,7 +69,7 @@
     <Compile Include="AltRole.cs" />
     <Compile Include="CommandProcessorConfig.cs" />
     <Compile Include="Constants.cs" />
-    <Compile Include="CreateCommandParameters.cs" />
+    <Compile Include="OperationParameters.cs" />
     <Compile Include="DateHelper.cs" />
     <Compile Include="DiscordText.cs" />
     <Compile Include="GlobalSuppressions.cs" />

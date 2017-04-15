@@ -291,48 +291,39 @@ namespace OpBot
 
             if (commandParts.Length == 1)
             {
-                await SendError(e, "What do you want me to edit?\n\nSpecify a new operation, size, day, time or mode\n\ne.g\n   edit 18:00\n   edit RAV");
+                await SendError(e, "What do you want me to edit?");
                 return;
             }
-            else if (commandParts.Length > 2)
-            {
-                await SendError(e, $"You can only specify one edit item at a time.");
-                return;
-            }
-
-            TimeSpan time;
-            string param = commandParts[1].ToUpperInvariant();
 
             try
             {
-                if (OpBotUtils.IsOperationMode(param))
+                OperationParameters opParams = OperationParameters.Parse(commandParts);
+                if (opParams.HasOperationCode)
                 {
-                    Operation.Mode = param;
+                    Operation.OperationName = opParams.OperationCode;
                 }
-                else if (param == "8" || param == "16")
+                if (opParams.HasTime)
                 {
-                    Operation.Size = int.Parse(param);
+                    Operation.Date = Operation.Date.Date + opParams.Time;
                 }
-                else if (param.IndexOf(":") > 0 
-                    && TimeSpan.TryParse(param, out time)
-                    && time.TotalHours <= 23)
+                if (opParams.HasMode)
                 {
-                    Operation.Date = Operation.Date.Date + time;
+                    Operation.Mode = opParams.Mode;
                 }
-                else if (DateHelper.IsDayName(param))
+                if (opParams.HasSize)
                 {
-                    DateTime newDate = DateHelper.GetDateForNextOccuranceOfDay(param);
+                    Operation.Size = opParams.Size;
+                }
+                if (opParams.HasDay)
+                {
+                    DateTime newDate = DateHelper.GetDateForNextOccuranceOfDay(opParams.Day);
                     Operation.Date = newDate + Operation.Date.TimeOfDay;
-                }
-                else
-                {
-                    Operation.OperationName = param;
                 }
                 await UpdateOperationMessage(e.Channel);
             }
-            catch (OpBotInvalidValueException)
+            catch (OpBotInvalidValueException ex)
             {
-                await SendError(e, $"I don't understand what you mean by {param}.");
+                await SendError(e, $"That is an invalid edit command\n\n.{ex.Message}");
             }
         }
 
@@ -457,15 +448,15 @@ namespace OpBot
         {
             try
             {
-                CreateCommandParameters ccp = CreateCommandParameters.Parse(commandParts);
+                OperationParameters opParams = OperationParameters.ParseWithDefault(commandParts);
 
                 Operation newOperation = new Operation()
                 {
-                    Size = ccp.Size,
-                    Mode = ccp.Mode,
-                    Date = DateHelper.GetDateForNextOccuranceOfDay(ccp.Day) + ccp.Time,
+                    Size = opParams.Size,
+                    Mode = opParams.Mode,
+                    Date = DateHelper.GetDateForNextOccuranceOfDay(opParams.Day) + opParams.Time,
                 };
-                newOperation.OperationName = ccp.OperationCode == "GF" ? GroupFinder.OperationOn(newOperation.Date) : ccp.OperationCode;
+                newOperation.OperationName = opParams.OperationCode == "GF" ? GroupFinder.OperationOn(newOperation.Date) : opParams.OperationCode;
 
                 if (Operation != null)
                     await UnpinPreviousOperation(e);

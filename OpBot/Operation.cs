@@ -220,10 +220,7 @@ namespace OpBot
             sb.Append("-man ");
             sb.AppendLine(Mode);
 
-            sb.Append(_date.ToLongDateString());
-            sb.Append(' ');
-            sb.Append(_date.ToShortTimeString());
-            sb.AppendLine(" (UTC)");
+            sb.AppendLine(_date.ToString("dddd d MMMM yyyy HH:mm (UTC)"));
 
             sb.Append("  *");
             sb.Append(baseTime.ToShortTimeString());
@@ -266,7 +263,7 @@ namespace OpBot
         {
             StringBuilder sb = new StringBuilder(512);
             int count = 0;
-            var roleMembers = _members.Where(m => m.PrimaryRole == primaryRole).ToList();
+            var roleMembers = _members.Where(m => m.PrimaryRole == primaryRole);
             foreach (var member in roleMembers)
             {
                 sb.Append("    ");
@@ -279,13 +276,12 @@ namespace OpBot
 
         private string AltRolesToString()
         {
-            int padding = _altRoles.Max(x => x.Name.Length) + 1;
+            int padding = _altRoles.Max(x => x.Name.Length) + 2;
             StringBuilder sb = new StringBuilder(512);
             sb.Append(DiscordText.CodeBlock);
             foreach (AltRole role in _altRoles)
             {
                 sb.Append(role.Name.PadRight(padding));
-                sb.Append(' ');
                 sb.Append(role.ToString());
             }
             sb.AppendLine(DiscordText.CodeBlock);

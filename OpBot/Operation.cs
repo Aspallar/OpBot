@@ -16,6 +16,7 @@ namespace OpBot
         private List<OperationMember> _members;
         private ulong _messageId;
         private DateTime _date;
+        private int _id;
 
         private static List<OperationDesc> _operationInfo = new List<OperationDesc>()
         {
@@ -42,6 +43,19 @@ namespace OpBot
             _members = new List<OperationMember>();
             _altRoles = new List<AltRole>();
             _notes = new List<string>();
+        }
+
+        public int Id
+        {
+            get
+            {
+                return _id;
+            }
+            set
+            {
+                lock (this)
+                    _id = value;
+            }
         }
 
         public ulong MessageId
@@ -212,6 +226,8 @@ namespace OpBot
         {
             StringBuilder sb = new StringBuilder(1024);
             DateTime baseTime = _date.IsDaylightSavingTime() ? _date.AddHours(1) : _date;
+
+            sb.AppendLine(DiscordText.BigText(Id));
 
             sb.Append("**");
             sb.Append(OperationName);

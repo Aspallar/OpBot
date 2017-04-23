@@ -67,8 +67,14 @@
   <ItemGroup>
     <Compile Include="AdminUser.cs" />
     <Compile Include="AltRole.cs" />
+    <Compile Include="AsyncEvent.cs" />
+    <Compile Include="CommandParseException.cs" />
+    <Compile Include="OperationUpdatedEventArgs.cs" />
+    <Compile Include="ParsedCommand.cs" />
     <Compile Include="CommandProcessorConfig.cs" />
     <Compile Include="Constants.cs" />
+    <Compile Include="OperationDeletedEventArgs.cs" />
+    <Compile Include="OperationCollection.cs" />
     <Compile Include="OperationParameters.cs" />
     <Compile Include="DateHelper.cs" />
     <Compile Include="DiscordText.cs" />

@@ -10,12 +10,16 @@ namespace OpBot
 {
     internal class CommandProcessor : IDisposable
     {
+        private static Object _operationLock = new Object();
+
         private readonly ulong _opBotUserId;
         private readonly NicknameList _names;
         private readonly Regex _removeMentionsRegex = new Regex(@"\<@!?\d+\>");
         private readonly OperationRepository _repository;
         private readonly IAdminUser _adminUsers;
         private readonly MessageDeleter _messageDeleter;
+
+        private readonly OperationCollection _ops = new OperationCollection();
 
         public Operation Operation { get; private set; }
 
@@ -27,6 +31,16 @@ namespace OpBot
             Operation = config.Operation;
             _adminUsers = config.AdminUsers;
             _messageDeleter = new MessageDeleter();
+            _ops.OperationDeleted += _ops_OperationDeleted;
+            _ops.OperationDeleted += _ops_OperationDeleted1;
+            _ops.OperationUpdated += OperationUpdated;
+        }
+
+        private async Task OperationUpdated(OperationUpdatedEventArgs e)
+        {
+            // TODO: IMPLEMENET OperationUpdated
+            Operation = e.Operation;
+
         }
 
         public bool IsCommand(MessageCreateEventArgs e)
@@ -43,90 +57,112 @@ namespace OpBot
                 return;
             }
 
-            string[] commandParts = ParseCommand(e.Message.Content);
-
-            if (commandParts.Length == 0)
+            try
             {
-                await ShowInstructions(e);
-            }
-            else
-            {
-                string command = commandParts[0].ToUpperInvariant();
+                ParsedCommand cmd = new ParsedCommand(e, _opBotUserId);
 
-                var user = e.Message.Mentions.Where(m => m.ID != _opBotUserId).SingleOrDefault();
-                if (user == null)
-                    user = e.Message.Author;
-
-                if ("CREATE".StartsWith(command))
+                if (cmd.CommandParts.Length == 0)
                 {
-                    await CreateCommand(e, commandParts);
-                }
-                else if (command == "TANK" || command == "DPS" || command == "HEAL" || command == "HEALZ" || command == "HEALS")
-                {
-                    await SignupCommand(e, command, user);
-                }
-                else if (command == "ALT" || command == "RESERVE")
-                {
-                    await AltCommand(e, commandParts, user);
-                }
-                else if (command == "ADDNOTE")
-                {
-                    await AddNoteCommand(e, commandParts);
-                }
-                else if (command == "DELNOTE")
-                {
-                    await DeleteNoteCommand(e, commandParts);
-                }
-                else if (command == "REMOVE")
-                {
-                    await RemoveCommand(e, user);
-                }
-                else if (command == "VER" || command == "VERSION")
-                {
-                    await VersionCommand(e);
-                }
-                else if (command == "GF")
-                {
-                    await GroupFinderCommand(e, commandParts);
-                }
-                else if (command == "REPOST")
-                {
-                    await RepostCommand(e);
-                }
-                else if (command == "RAIDTIMES")
-                {
-                    await RaidTimesCommand(e);
-                }
-                else if (command == "EDIT")
-                {
-                    await EditCommand(e, commandParts);
-                }
-                else if (command == "NO" && commandParts.Length == 2 && commandParts[1].ToUpperInvariant() == "OPERATION")
-                {
-                    await NoOperationCommand(e);
-                }
-                else if (command == "BIGTEXT")
-                {
-                    await BigTextCommand(e, commandParts);
-                }
-                else if (command == "OFFLINE")
-                {
-                    await OfflineCommand(e, commandParts);
-                }
-                else if (command == "BACK" || command == "BK")
-                {
-                    await BackCommand(e, commandParts);
-                }
-                else if (command == "PURGE")
-                {
-                    await PurgeCommand(e);
+                    await ShowInstructions(e);
                 }
                 else
                 {
-                    await SendError(e, $"That is not a command that I recognize.");
+                    if ("CREATE".StartsWith(cmd.Command))
+                    {
+                        await CreateCommand(e, cmd);
+                    }
+                    else if (cmd.Command == "TANK" || cmd.Command == "DPS" || cmd.Command == "HEAL" || cmd.Command == "HEALZ" || cmd.Command == "HEALS")
+                    {
+                        await SignupCommand(e, cmd);
+                    }
+                    else if (cmd.Command == "ALT" || cmd.Command == "RESERVE")
+                    {
+                        await AltCommand(e, cmd);
+                    }
+                    else if (cmd.Command == "ADDNOTE")
+                    {
+                        await AddNoteCommand(e, cmd.CommandParts);
+                    }
+                    else if (cmd.Command == "DELNOTE")
+                    {
+                        await DeleteNoteCommand(e, cmd.CommandParts);
+                    }
+                    else if (cmd.Command == "REMOVE")
+                    {
+                        await RemoveCommand(e, cmd.User);
+                    }
+                    else if (cmd.Command == "VER" || cmd.Command == "VERSION")
+                    {
+                        await VersionCommand(e);
+                    }
+                    else if (cmd.Command == "GF")
+                    {
+                        await GroupFinderCommand(e, cmd.CommandParts);
+                    }
+                    else if (cmd.Command == "REPOST")
+                    {
+                        await RepostCommand(e);
+                    }
+                    else if (cmd.Command == "RAIDTIMES")
+                    {
+                        await RaidTimesCommand(e);
+                    }
+                    else if (cmd.Command == "EDIT")
+                    {
+                        await EditCommand(e, cmd.CommandParts);
+                    }
+                    else if (cmd.Command == "NO" && cmd.CommandParts.Length == 2 && cmd.CommandParts[1].ToUpperInvariant() == "OPERATION")
+                    {
+                        await NoOperationCommand(e);
+                    }
+                    else if (cmd.Command == "BIGTEXT")
+                    {
+                        await BigTextCommand(e, cmd);
+                    }
+                    else if (cmd.Command == "OFFLINE")
+                    {
+                        await OfflineCommand(e, cmd.CommandParts);
+                    }
+                    else if (cmd.Command == "BACK" || cmd.Command == "BK")
+                    {
+                        await BackCommand(e, cmd.CommandParts);
+                    }
+                    else if (cmd.Command == "PURGE")
+                    {
+                        await PurgeCommand(e);
+                    }
+                    else if (cmd.Command == "TRY")
+                    {
+                        await TryCommand(e);
+                    }
+                    else
+                    {
+                        await SendError(e, $"That is not a command that I recognize.");
+                    }
                 }
             }
+            catch (CommandParseException ex)
+            {
+                await SendError(e, ex.Message);
+            }
 
+        }
+
+        private async Task TryCommand(MessageCreateEventArgs e)
+        {
+            await _ops.Delete(1);
+        }
+
+        private async Task _ops_OperationDeleted(OperationDeletedEventArgs e)
+        {
+            Console.WriteLine("******************************* _ops_OperationDeleted called");
+            await Task.Delay(0);
+        }
+
+        private async Task _ops_OperationDeleted1(OperationDeletedEventArgs e)
+        {
+            Console.WriteLine("******************************* and so was this");
+            await Task.Delay(0);
         }
 
         private async Task VersionCommand(MessageCreateEventArgs e)
@@ -184,26 +220,17 @@ namespace OpBot
             await e.Channel.SendMessage(fullText);
         }
 
-        private async Task BigTextCommand(MessageCreateEventArgs e, string[] commandParts)
+        private async Task BigTextCommand(MessageCreateEventArgs e, ParsedCommand cmd)
         {
-            if (!CheckIsAdminUser(e, "BIGTEXT") || commandParts.Length <= 1)
+            if (!CheckIsAdminUser(e, "BIGTEXT"))
                 return;
 
             await SafeDeleteMessage(e);
 
-            bool autoDelete = true;
-            int start = 1;
-
-            if (commandParts[1].ToUpperInvariant() == "-PERM")
+            for (int k = 1; k < cmd.CommandParts.Length; k++)
             {
-                autoDelete = false;
-                start = 2;
-            }
-
-            for (int k = start; k < commandParts.Length; k++)
-            {
-                DiscordMessage message = await e.Channel.SendMessage(DiscordText.BigText(commandParts[k]));
-                if (autoDelete)
+                DiscordMessage message = await e.Channel.SendMessage(DiscordText.BigText(cmd.CommandParts[k]));
+                if (!cmd.IsPermanent)
                     _messageDeleter.AddMessage(message, 30000);
             }
         }
@@ -219,14 +246,14 @@ namespace OpBot
             await e.Channel.SendMessage($"{DiscordText.OkHand} {DiscordText.BigText("done")}");
         }
 
-        private async Task AltCommand(MessageCreateEventArgs e, string[] commandParts, DiscordUser user)
+        private async Task AltCommand(MessageCreateEventArgs e, ParsedCommand cmd)
         {
             if (!CheckForOperation(e))
                 return;
 
             try
             {
-                Operation.SetAltRoles(_names.GetName(user), user.ID, commandParts);
+                Operation.SetAltRoles(_names.GetName(cmd.User), cmd.User.ID, cmd.CommandParts);
                 await UpdateOperationMessage(e.Channel);
             }
             catch (OpBotInvalidValueException ex)
@@ -432,23 +459,27 @@ namespace OpBot
             await UpdateOperationMessage(e.Channel);
         }
 
-        private async Task SignupCommand(MessageCreateEventArgs e, string command, DiscordUser user)
+        private async Task SignupCommand(MessageCreateEventArgs e, ParsedCommand cmd)
         {
-            if (command.StartsWith("HEAL"))
-                command = command.Substring(0, 4);
+            string role = cmd.Command.StartsWith("HEAL") ? cmd.Command.Substring(0, 4) : cmd.Command;
 
-            if (!CheckForOperation(e))
+            bool success = await _ops.Signup(cmd.OperationId, cmd.User.ID, _names.GetName(cmd.User), role);
+
+            if (!success)
+            {
+                string text = (cmd.OperationId == 0) ? "There are no active operations" : $"Operation {DiscordText.BigText(cmd.OperationId)} does not exist";
+                await SendError(e, text);
                 return;
+            }
 
-            Operation.Signup(user.ID, _names.GetName(user), command);
-            await UpdateOperationMessage(e.Channel);
+            //await UpdateOperationMessage(e.Channel);
         }
 
-        private async Task CreateCommand(MessageCreateEventArgs e, string[] commandParts)
+        private async Task CreateCommand(MessageCreateEventArgs e, ParsedCommand cmd)
         {
             try
             {
-                OperationParameters opParams = OperationParameters.ParseWithDefault(commandParts);
+                OperationParameters opParams = OperationParameters.ParseWithDefault(cmd.CommandParts);
 
                 Operation newOperation = new Operation()
                 {
@@ -458,15 +489,16 @@ namespace OpBot
                 };
                 newOperation.OperationName = opParams.OperationCode == "GF" ? GroupFinder.OperationOn(newOperation.Date) : opParams.OperationCode;
 
-                if (Operation != null)
-                    await UnpinPreviousOperation(e);
+                DiscordMessage newOpMessage = await e.Channel.SendMessage("Creating event...");
+                newOperation.MessageId = newOpMessage.ID;
 
-                Operation = newOperation;
-                string text = Operation.GetOperationMessageText();
-                DiscordMessage newOpMessage = await e.Channel.SendMessage(text);
-                Operation.MessageId = newOpMessage.ID;
+                string text;
+                lock (_operationLock)
+                    text = _ops.Add(newOperation).GetOperationMessageText();
+                await newOpMessage.Edit(text);
                 await PinMessage(e, newOpMessage);
-                _repository.Save(Operation);
+                // TODO: persistance
+                //_repository.Save(Operation);
             }
             catch (OpBotInvalidValueException opEx)
             {
@@ -546,12 +578,6 @@ namespace OpBot
             var opMessage = await channel.GetMessage(Operation.MessageId);
             await opMessage.Edit(Operation.GetOperationMessageText());
             _repository?.Save(Operation);
-        }
-
-        private string[] ParseCommand(string content)
-        {
-            string contentWithNoMentions = _removeMentionsRegex.Replace(content, string.Empty);
-            return contentWithNoMentions.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
         }
 
         private bool CheckForOperation(MessageCreateEventArgs e)

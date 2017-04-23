@@ -18,6 +18,11 @@ namespace OpBot
         public const string CodeBlock = "```";
         public const string StuckOutTongue = ":stuck_out_tongue:";
 
+        public static string BigText(int value)
+        {
+            return BigText(value.ToString());
+        }
+
         public static string BigText(string text)
         {
             const int letterPosition = 20; // position of x in regionalIndicator

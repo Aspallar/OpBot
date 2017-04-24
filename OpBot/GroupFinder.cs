@@ -5,8 +5,8 @@ namespace OpBot
 {
     internal static class GroupFinder
     {
-        private static readonly string[] order = { "DP", "SV", "EV", "DF", "RAV", "KP", "EC", "TOS", "TFB" };
-        private static readonly DateTime baseDate = new DateTime(2017, 3, 6);
+        private static readonly string[] order = { "SV", "EV", "DF", "RAV", "KP", "EC", "TOS", "TFB", "DP" };
+        private static readonly DateTime baseDate = new DateTime(2017, 4, 23);
 
         public static string OperationOn(DateTime dt)
         {
@@ -16,21 +16,21 @@ namespace OpBot
 
         public static List<string> NextDays(int numDays)
         {
-            List<string> week = new List<string>();
+            List<string> nextDays = new List<string>();
             int opIndex = GetOrderIndex(DateTime.Now.Date);
             for (int k = 0; k < numDays; k++)
             {
-                week.Add(order[opIndex]);
+                nextDays.Add(order[opIndex]);
                 if (++opIndex >= order.Length)
                     opIndex = 0;
             }
-            return week;
+            return nextDays;
         }
 
         private static int GetOrderIndex(DateTime dt)
         {
             TimeSpan toBase = dt.Date - baseDate;
-            int opIndex = toBase.Days % order.Length;
+            int opIndex = (int) toBase.TotalDays % order.Length;
             return opIndex;
         }
     }

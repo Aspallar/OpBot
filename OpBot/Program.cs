@@ -29,20 +29,11 @@ namespace OpBot
                 return;
             }
 
-            Operation op = operationRepository.Get();
-            if (op == null)
-                Console.WriteLine("No current operation");
-            else
-                Console.WriteLine(op.GetOperationMessageText());
-
-            _commandProcessor = new CommandProcessor(new CommandProcessorConfig()
-            {
-                OpBotUserId = Properties.Settings.Default.OpBotUserId,
-                Names = _names,
-                Operation = op,
-                Repository = operationRepository,
-                AdminUsers = admins,
-            });
+            //Operation op = operationRepository.Get();
+            //if (op == null)
+            //    Console.WriteLine("No current operation");
+            //else
+            //    Console.WriteLine(op.GetOperationMessageText());
 
             _client = new DiscordClient(new DiscordConfig()
             {
@@ -52,6 +43,16 @@ namespace OpBot
                 LogLevel = LogLevel.Debug,
                 UseInternalLogHandler = true,
                 AutoReconnect = true,
+            });
+
+            _commandProcessor = new CommandProcessor(new CommandProcessorConfig()
+            {
+                OpBotUserId = Properties.Settings.Default.OpBotUserId,
+                OpBotChannelId = Properties.Settings.Default.OpBotChannel,
+                Names = _names,
+                Repository = operationRepository,
+                AdminUsers = admins,
+                Client = _client,
             });
 
             _client.MessageCreated += Client_MessageCreated;

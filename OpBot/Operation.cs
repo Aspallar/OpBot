@@ -192,7 +192,8 @@ namespace OpBot
         {
             lock (this)
             {
-                _notes.RemoveAt(noteIndex);
+                if (noteIndex >= 0 && noteIndex < _notes.Count)
+                    _notes.RemoveAt(noteIndex);
             }
         }
 

@@ -18,30 +18,25 @@ namespace OpBot
         private readonly OperationRepository _repository;
         private readonly IAdminUser _adminUsers;
         private readonly MessageDeleter _messageDeleter;
+        private readonly DiscordClient _client;
+        private readonly ulong _opBotChannelId;
 
         private readonly OperationCollection _ops = new OperationCollection();
 
-        public Operation Operation { get; private set; }
 
         public CommandProcessor(CommandProcessorConfig config)
         {
             _opBotUserId = config.OpBotUserId;
             _names = config.Names;
             _repository = config.Repository;
-            Operation = config.Operation;
             _adminUsers = config.AdminUsers;
+            _client = config.Client;
+            _opBotChannelId = config.OpBotChannelId;
             _messageDeleter = new MessageDeleter();
-            _ops.OperationDeleted += _ops_OperationDeleted;
-            _ops.OperationDeleted += _ops_OperationDeleted1;
+            _ops.OperationDeleted += OperationDeleted;
             _ops.OperationUpdated += OperationUpdated;
         }
 
-        private async Task OperationUpdated(OperationUpdatedEventArgs e)
-        {
-            // TODO: IMPLEMENET OperationUpdated
-            Operation = e.Operation;
-
-        }
 
         public bool IsCommand(MessageCreateEventArgs e)
         {
@@ -81,15 +76,15 @@ namespace OpBot
                     }
                     else if (cmd.Command == "ADDNOTE")
                     {
-                        await AddNoteCommand(e, cmd.CommandParts);
+                        await AddNoteCommand(e, cmd);
                     }
                     else if (cmd.Command == "DELNOTE")
                     {
-                        await DeleteNoteCommand(e, cmd.CommandParts);
+                        await DeleteNoteCommand(e, cmd);
                     }
                     else if (cmd.Command == "REMOVE")
                     {
-                        await RemoveCommand(e, cmd.User);
+                        await RemoveCommand(e, cmd);
                     }
                     else if (cmd.Command == "VER" || cmd.Command == "VERSION")
                     {
@@ -105,15 +100,15 @@ namespace OpBot
                     }
                     else if (cmd.Command == "RAIDTIMES")
                     {
-                        await RaidTimesCommand(e);
+                        await RaidTimesCommand(e, cmd);
                     }
                     else if (cmd.Command == "EDIT")
                     {
-                        await EditCommand(e, cmd.CommandParts);
+                        await EditCommand(e, cmd);
                     }
-                    else if (cmd.Command == "NO" && cmd.CommandParts.Length == 2 && cmd.CommandParts[1].ToUpperInvariant() == "OPERATION")
+                    else if (cmd.Command == "DEACTIVATE")
                     {
-                        await NoOperationCommand(e);
+                        await DeactivateCommand(e, cmd);
                     }
                     else if (cmd.Command == "BIGTEXT")
                     {
@@ -153,17 +148,39 @@ namespace OpBot
             await _ops.Delete(1);
         }
 
-        private async Task _ops_OperationDeleted(OperationDeletedEventArgs e)
+        private async Task OperationDeleted(OperationDeletedEventArgs e)
         {
-            Console.WriteLine("******************************* _ops_OperationDeleted called");
-            await Task.Delay(0);
+            DiscordChannel channel = null;
+            try
+            {
+                channel = await _client.GetChannel(_opBotChannelId);
+                DiscordMessage message = await channel.GetMessage(e.OperationMessageId);
+                await message.Unpin();
+            }
+            catch (NotFoundException)
+            {
+                // do nothing
+            }
+            catch (UnauthorizedException)
+            {
+                await channel.SendMessage("Unable to perform unpin. I need the 'Manage Messages' permission to do so.");
+            }
         }
 
-        private async Task _ops_OperationDeleted1(OperationDeletedEventArgs e)
+        private async Task OperationUpdated(OperationUpdatedEventArgs e)
         {
-            Console.WriteLine("******************************* and so was this");
-            await Task.Delay(0);
+            try
+            {
+                DiscordMessage message = await _client.GetMessage(_opBotChannelId, e.Operation.MessageId);
+                await message.Edit(e.Operation.GetOperationMessageText());
+            }
+            catch (NotFoundException)
+            {
+                // TODO: something better here
+                Console.WriteLine($"ERROR: unable to find operation {e.Operation.Id}");
+            }
         }
+
 
         private async Task VersionCommand(MessageCreateEventArgs e)
         {
@@ -235,26 +252,36 @@ namespace OpBot
             }
         }
 
-        private async Task NoOperationCommand(MessageCreateEventArgs e)
+        private async Task DeactivateCommand(MessageCreateEventArgs e, ParsedCommand cmd)
         {
-            if (!CheckForOperation(e))
-                return;
-
-            await UnpinPreviousOperation(e);
-            Operation = null;
-            _repository.Save(Operation);
-            await e.Channel.SendMessage($"{DiscordText.OkHand} {DiscordText.BigText("done")}");
+            int operationId = cmd.OperationId;
+            if (operationId == 0)
+            {
+                if (cmd.CommandParts.Length < 2)
+                {
+                    await SendError(e, "You must specify an operation to deactivate.");
+                    return;
+                }
+                if (!int.TryParse(cmd.CommandParts[1], out operationId) || operationId < 0)
+                {
+                    await SendError(e, $"{cmd.CommandParts[1]} is not a valid operation number");
+                    return;
+                }
+            }
+            bool success = await _ops.Delete(operationId);
+            if (!success)
+                await SendOperationErrorMessage(e, operationId);
+            else
+                await e.Channel.SendMessage($"Operation {DiscordText.BigText(operationId)} deactivated {DiscordText.OkHand}.");
         }
 
         private async Task AltCommand(MessageCreateEventArgs e, ParsedCommand cmd)
         {
-            if (!CheckForOperation(e))
-                return;
-
             try
             {
-                Operation.SetAltRoles(_names.GetName(cmd.User), cmd.User.ID, cmd.CommandParts);
-                await UpdateOperationMessage(e.Channel);
+                bool success = await _ops.SetOperationRoles(cmd.OperationId, _names.GetName(cmd.User), cmd.User.ID, cmd.CommandParts);
+                if (!success)
+                    await SendOperationErrorMessage(e, cmd.OperationId);
             }
             catch (OpBotInvalidValueException ex)
             {
@@ -263,17 +290,21 @@ namespace OpBot
         }
 
 
-        private async Task RaidTimesCommand(MessageCreateEventArgs e)
+        private async Task RaidTimesCommand(MessageCreateEventArgs e, ParsedCommand cmd)
         {
 #if DEBUG
             const int messageLifetime = 180000; 
 #else
             const int messageLifetime = 180000; // 3 minutes
 #endif
-            if (!CheckForOperation(e))
+            DateTime operationDate;
+            if (!_ops.GetOperationDate(cmd.OperationId, out operationDate))
+            {
+                await SendError(e, "There are no active operations to display raid time for.");
                 return;
+            }
 
-            List<TimeZoneTime> times = TimeZones.GetZoneTimes(Operation.Date);
+            List<TimeZoneTime> times = TimeZones.GetZoneTimes(operationDate);
             string timesMessage = TimeZones.ToString(times);
             StringBuilder messageText = new StringBuilder(timesMessage.Length + 80);
             messageText.Append(DiscordText.CodeBlock);
@@ -286,37 +317,32 @@ namespace OpBot
             await SafeDeleteMessage(e);
         }
 
-        private async Task DeleteNoteCommand(MessageCreateEventArgs e, string[] commandParts)
+        private async Task DeleteNoteCommand(MessageCreateEventArgs e, ParsedCommand cmd)
         {
-            if (commandParts.Length != 2)
+            if (cmd.CommandParts.Length != 2)
             {
-                await SendError(e, "You should only specify a note number.");
+                await SendError(e, "You should specify only a note number, or * for all notes.");
                 return;
             }
-            if (commandParts[1] == "*")
+            int noteNumber;
+            if (cmd.CommandParts[1] == "*")
             {
-                Operation.ResetNotes();
+                noteNumber = 0;
             }
-            else
+            else if (!int.TryParse(cmd.CommandParts[1], out noteNumber) || noteNumber < 1)
             {
-                int noteNumber;
+                await SendError(e, $"{cmd.CommandParts[1]} is not a valid note number.");
+                return;
+            }
 
-                if (!int.TryParse(commandParts[1], out noteNumber) || noteNumber < 1 || noteNumber > Operation.NoteCount)
-                {
-                    await SendError(e, "I'm afraid that's not a valid note number.");
-                    return;
-                }
-                Operation.DeleteNote(noteNumber - 1);
-            }
-            await UpdateOperationMessage(e.Channel);
+            bool success = await _ops.DeleteOperationNote(cmd.OperationId, noteNumber - 1);
+            if (!success)
+                await SendOperationErrorMessage(e, cmd.OperationId);
         }
 
-        private async Task EditCommand(MessageCreateEventArgs e, string[] commandParts)
+        private async Task EditCommand(MessageCreateEventArgs e, ParsedCommand cmd)
         {
-            if (!CheckForOperation(e))
-                return;
-
-            if (commandParts.Length == 1)
+            if (cmd.CommandParts.Length == 1)
             {
                 await SendError(e, "What do you want me to edit?");
                 return;
@@ -324,29 +350,10 @@ namespace OpBot
 
             try
             {
-                OperationParameters opParams = OperationParameters.Parse(commandParts);
-                if (opParams.HasOperationCode)
-                {
-                    Operation.OperationName = opParams.OperationCode;
-                }
-                if (opParams.HasTime)
-                {
-                    Operation.Date = Operation.Date.Date + opParams.Time;
-                }
-                if (opParams.HasMode)
-                {
-                    Operation.Mode = opParams.Mode;
-                }
-                if (opParams.HasSize)
-                {
-                    Operation.Size = opParams.Size;
-                }
-                if (opParams.HasDay)
-                {
-                    DateTime newDate = DateHelper.GetDateForNextOccuranceOfDay(opParams.Day);
-                    Operation.Date = newDate + Operation.Date.TimeOfDay;
-                }
-                await UpdateOperationMessage(e.Channel);
+                OperationParameters opParams = OperationParameters.Parse(cmd.CommandParts);
+                bool success = await _ops.UpdateOperation(cmd.OperationId, opParams);
+                if (!success)
+                    await SendOperationErrorMessage(e, cmd.OperationId);
             }
             catch (OpBotInvalidValueException ex)
             {
@@ -406,7 +413,7 @@ namespace OpBot
             var messages = await e.Channel.GetMessages();
             foreach (var message in messages)
             {
-                if (Operation == null || message.ID != Operation.MessageId)
+                if (!_ops.IsOperationMessage(message.ID))
                 {
                     try
                     {
@@ -438,25 +445,22 @@ namespace OpBot
             return true;
         }
 
-        private async Task RemoveCommand(MessageCreateEventArgs e, DiscordUser user)
+        private async Task RemoveCommand(MessageCreateEventArgs e, ParsedCommand cmd)
         {
-            if (!CheckForOperation(e))
-                return;
-            Operation.Remove(user.ID);
-            await UpdateOperationMessage(e.Channel);
+            bool success = await _ops.RemoveSignup(cmd.OperationId, cmd.User.ID);
+            if (!success)
+                await SendOperationErrorMessage(e, cmd.OperationId);
         }
 
-        private async Task AddNoteCommand(MessageCreateEventArgs e, string[] commandParts)
+        private async Task AddNoteCommand(MessageCreateEventArgs e, ParsedCommand cmd)
         {
-            if (!CheckForOperation(e))
-                return;
-
-            if (commandParts.Length > 1)
+            if (cmd.CommandParts.Length > 1)
             {
-                string text = $"{string.Join(" ", commandParts, 1, commandParts.Length - 1)} *({_names.GetName(e.Message.Author)})*";
-                Operation.AddNote(text);
+                string noteText = $"{string.Join(" ", cmd.CommandParts, 1, cmd.CommandParts.Length - 1)} *({_names.GetName(e.Message.Author)})*";
+                bool success = await _ops.AddOperationNote(cmd.OperationId, noteText);
+                if (!success)
+                    await SendOperationErrorMessage(e, cmd.OperationId);
             }
-            await UpdateOperationMessage(e.Channel);
         }
 
         private async Task SignupCommand(MessageCreateEventArgs e, ParsedCommand cmd)
@@ -466,13 +470,13 @@ namespace OpBot
             bool success = await _ops.Signup(cmd.OperationId, cmd.User.ID, _names.GetName(cmd.User), role);
 
             if (!success)
-            {
-                string text = (cmd.OperationId == 0) ? "There are no active operations" : $"Operation {DiscordText.BigText(cmd.OperationId)} does not exist";
-                await SendError(e, text);
-                return;
-            }
+                await SendOperationErrorMessage(e, cmd.OperationId);
+        }
 
-            //await UpdateOperationMessage(e.Channel);
+        private async Task SendOperationErrorMessage(MessageCreateEventArgs e, int operationId)
+        {
+            string text = (operationId == 0) ? "There are no active operations" : $"Operation {DiscordText.BigText(operationId)} does not exist";
+            await SendError(e, text);
         }
 
         private async Task CreateCommand(MessageCreateEventArgs e, ParsedCommand cmd)
@@ -506,40 +510,28 @@ namespace OpBot
             }
         }
 
-        private async Task UnpinPreviousOperation(MessageCreateEventArgs e)
-        {
-            try
-            {
-                var message = await e.Channel.GetMessage(Operation.MessageId);
-                await UnpinMessage(e, message);
-            }
-            catch (NotFoundException)
-            {
-                // its valid to do nothing. someone might have deleted it.
-            }
-        }
-
         private async Task RepostCommand(MessageCreateEventArgs e)
         {
-            if (!CheckForOperation(e))
-                return;
+            await e.Message.Respond("Sorry the repost command is not implemenetd in this version");
+            //if (!CheckForOperation(e))
+            //    return;
 
-            DiscordMessage previousOperationMessage;
+            //DiscordMessage previousOperationMessage;
 
-            try
-            {
-                previousOperationMessage = await e.Channel.GetMessage(Operation.MessageId);
-            }
-            catch (NotFoundException)
-            {
-                previousOperationMessage = null;
-            }
-            DiscordMessage newOperationMessage = await e.Channel.SendMessage(Operation.GetOperationMessageText());
-            Operation.MessageId = newOperationMessage.ID;
-            await PinMessage(e, newOperationMessage);
-            if (previousOperationMessage != null)
-                await previousOperationMessage.Delete();
-            _repository.Save(Operation);
+            //try
+            //{
+            //    previousOperationMessage = await e.Channel.GetMessage(Operation.MessageId);
+            //}
+            //catch (NotFoundException)
+            //{
+            //    previousOperationMessage = null;
+            //}
+            //DiscordMessage newOperationMessage = await e.Channel.SendMessage(Operation.GetOperationMessageText());
+            //Operation.MessageId = newOperationMessage.ID;
+            //await PinMessage(e, newOperationMessage);
+            //if (previousOperationMessage != null)
+            //    await previousOperationMessage.Delete();
+            //_repository.Save(Operation);
         }
 
 
@@ -572,25 +564,6 @@ namespace OpBot
             return $"I am unable to {actionText} as I do not appear to have the necessary 'Manage Messages' permission.";
         }
 
-        private async Task UpdateOperationMessage(DiscordChannel channel)
-        {
-            System.Diagnostics.Debug.Assert(Operation != null);
-            var opMessage = await channel.GetMessage(Operation.MessageId);
-            await opMessage.Edit(Operation.GetOperationMessageText());
-            _repository?.Save(Operation);
-        }
-
-        private bool CheckForOperation(MessageCreateEventArgs e)
-        {
-            if (Operation == null)
-            {
-                SendError(e, "I cannot execute that command because there is no current operation.")
-                    .GetAwaiter()
-                    .GetResult();
-                return false;
-            }
-            return true;
-        }
 
         private static string GetSelfDestructText(int lifetime)
         {

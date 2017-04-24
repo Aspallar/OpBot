@@ -20,9 +20,7 @@ namespace OpBot
         private readonly MessageDeleter _messageDeleter;
         private readonly DiscordClient _client;
         private readonly ulong _opBotChannelId;
-
-        private readonly OperationCollection _ops = new OperationCollection();
-
+        private readonly OperationCollection _ops;
 
         public CommandProcessor(CommandProcessorConfig config)
         {
@@ -33,6 +31,7 @@ namespace OpBot
             _client = config.Client;
             _opBotChannelId = config.OpBotChannelId;
             _messageDeleter = new MessageDeleter();
+            _ops = config.Ops;
             _ops.OperationDeleted += OperationDeleted;
             _ops.OperationUpdated += OperationUpdated;
         }
@@ -122,13 +121,13 @@ namespace OpBot
                     {
                         await BackCommand(e, cmd.CommandParts);
                     }
+                    else if (cmd.Command == "LIST")
+                    {
+                        await ListCommand(e);
+                    }
                     else if (cmd.Command == "PURGE")
                     {
                         await PurgeCommand(e);
-                    }
-                    else if (cmd.Command == "TRY")
-                    {
-                        await TryCommand(e);
                     }
                     else
                     {
@@ -143,9 +142,12 @@ namespace OpBot
 
         }
 
-        private async Task TryCommand(MessageCreateEventArgs e)
+        private async Task ListCommand(MessageCreateEventArgs e)
         {
-            await _ops.Delete(1);
+            string text = _ops.GetSummary();
+            if (string.IsNullOrEmpty(text))
+                text = "There are no active operations to list.";
+            await e.Message.Respond(text);
         }
 
         private async Task OperationDeleted(OperationDeletedEventArgs e)
@@ -184,7 +186,7 @@ namespace OpBot
 
         private async Task VersionCommand(MessageCreateEventArgs e)
         {
-            string text = "Version: " + DiscordText.BigText(OpBotUtils.GetVersionText());
+            string text = "Version: " + DiscordText.BigText(OpBotUtils.GetVersionText()) + "\nBETA";
             await e.Channel.SendMessage(text);
         }
 
@@ -270,9 +272,14 @@ namespace OpBot
             }
             bool success = await _ops.Delete(operationId);
             if (!success)
+            {
                 await SendOperationErrorMessage(e, operationId);
+            }
             else
+            {
+                _repository.Save(_ops);
                 await e.Channel.SendMessage($"Operation {DiscordText.BigText(operationId)} deactivated {DiscordText.OkHand}.");
+            }
         }
 
         private async Task AltCommand(MessageCreateEventArgs e, ParsedCommand cmd)
@@ -282,6 +289,8 @@ namespace OpBot
                 bool success = await _ops.SetOperationRoles(cmd.OperationId, _names.GetName(cmd.User), cmd.User.ID, cmd.CommandParts);
                 if (!success)
                     await SendOperationErrorMessage(e, cmd.OperationId);
+                else
+                    _repository.Save(_ops);
             }
             catch (OpBotInvalidValueException ex)
             {
@@ -338,6 +347,8 @@ namespace OpBot
             bool success = await _ops.DeleteOperationNote(cmd.OperationId, noteNumber - 1);
             if (!success)
                 await SendOperationErrorMessage(e, cmd.OperationId);
+            else
+                _repository.Save(_ops);
         }
 
         private async Task EditCommand(MessageCreateEventArgs e, ParsedCommand cmd)
@@ -354,6 +365,8 @@ namespace OpBot
                 bool success = await _ops.UpdateOperation(cmd.OperationId, opParams);
                 if (!success)
                     await SendOperationErrorMessage(e, cmd.OperationId);
+                else
+                    _repository.Save(_ops);
             }
             catch (OpBotInvalidValueException ex)
             {
@@ -450,6 +463,8 @@ namespace OpBot
             bool success = await _ops.RemoveSignup(cmd.OperationId, cmd.User.ID);
             if (!success)
                 await SendOperationErrorMessage(e, cmd.OperationId);
+            else
+                _repository.Save(_ops);
         }
 
         private async Task AddNoteCommand(MessageCreateEventArgs e, ParsedCommand cmd)
@@ -460,6 +475,8 @@ namespace OpBot
                 bool success = await _ops.AddOperationNote(cmd.OperationId, noteText);
                 if (!success)
                     await SendOperationErrorMessage(e, cmd.OperationId);
+                else
+                    _repository.Save(_ops);
             }
         }
 
@@ -471,6 +488,8 @@ namespace OpBot
 
             if (!success)
                 await SendOperationErrorMessage(e, cmd.OperationId);
+            else
+                _repository.Save(_ops);
         }
 
         private async Task SendOperationErrorMessage(MessageCreateEventArgs e, int operationId)
@@ -501,8 +520,7 @@ namespace OpBot
                     text = _ops.Add(newOperation).GetOperationMessageText();
                 await newOpMessage.Edit(text);
                 await PinMessage(e, newOpMessage);
-                // TODO: persistance
-                //_repository.Save(Operation);
+                _repository.Save(_ops);
             }
             catch (OpBotInvalidValueException opEx)
             {

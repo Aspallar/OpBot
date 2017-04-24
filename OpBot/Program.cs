@@ -29,11 +29,7 @@ namespace OpBot
                 return;
             }
 
-            //Operation op = operationRepository.Get();
-            //if (op == null)
-            //    Console.WriteLine("No current operation");
-            //else
-            //    Console.WriteLine(op.GetOperationMessageText());
+            OperationCollection ops = operationRepository.Get();
 
             _client = new DiscordClient(new DiscordConfig()
             {
@@ -53,6 +49,7 @@ namespace OpBot
                 Repository = operationRepository,
                 AdminUsers = admins,
                 Client = _client,
+                Ops = ops,
             });
 
             _client.MessageCreated += Client_MessageCreated;

@@ -266,12 +266,8 @@ namespace OpBot
                 sb.Append(AltRolesToString());
             }
 
-            if (_notes.Count > 0)
-            {
-                sb.AppendLine();
-                foreach (string note in _notes)
-                    sb.AppendLine(note);
-            }
+            foreach (string note in _notes)
+                sb.AppendLine(note);
 
             return sb.ToString();
         }

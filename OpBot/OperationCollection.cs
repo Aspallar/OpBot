@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace OpBot
 {
+    [Serializable]
     internal class OperationCollection
     {
         public const int MaxOperations = 64;
@@ -170,8 +171,27 @@ namespace OpBot
         {
             lock (this)
             {
-                return _operations.Any(x => x.MessageId == messageId);
+                return _operations.Any(x => x != null && x.MessageId == messageId);
             }
+        }
+
+        public string GetSummary()
+        {
+            StringBuilder sb = new StringBuilder(512);
+            lock (this)
+            {
+                foreach (Operation op in _operations)
+                {
+                    if (op != null)
+                    {
+                        sb.Append(DiscordText.BigText(op.Id));
+                        sb.Append(' ');
+                        sb.Append(op.OperationName);
+                        sb.AppendLine(op.Date.ToString(" (dddd)"));
+                    }
+                }
+            }
+            return sb.ToString();
         }
 
         private Operation GetOperation(int operationId)
@@ -203,11 +223,18 @@ namespace OpBot
             return null;
         }
 
+        public void WireUp()
+        {
+            _operationDeleted = new AsyncEvent<OperationDeletedEventArgs>();
+            _operationUpdated = new AsyncEvent<OperationUpdatedEventArgs>();
+        }
+
         public event AsyncEventHandler<OperationDeletedEventArgs> OperationDeleted
         {
             add { this._operationDeleted.Register(value); }
             remove { this._operationDeleted.Unregister(value); }
         }
+        [NonSerialized]
         private AsyncEvent<OperationDeletedEventArgs> _operationDeleted = new AsyncEvent<OperationDeletedEventArgs>();
 
 
@@ -216,6 +243,7 @@ namespace OpBot
             add { this._operationUpdated.Register(value); }
             remove { this._operationUpdated.Unregister(value); }
         }
+        [NonSerialized]
         private AsyncEvent<OperationUpdatedEventArgs> _operationUpdated = new AsyncEvent<OperationUpdatedEventArgs>();
 
     }

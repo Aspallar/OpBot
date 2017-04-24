@@ -13,33 +13,26 @@ namespace OpBot
             _filename = fileName;
         }
 
-        public Operation Get()
+        public OperationCollection Get()
         {
+            OperationCollection ops = new OperationCollection();
             if (!File.Exists(_filename))
-                return null;
+                return ops;
 
-            Operation op;
             IFormatter formatter = new BinaryFormatter();
             using (Stream stream = new FileStream(_filename, FileMode.Open, FileAccess.Read, FileShare.Read))
-                op = (Operation)formatter.Deserialize(stream);
-            return op;
+                ops = (OperationCollection)formatter.Deserialize(stream);
+            ops.WireUp();
+            return ops;
         }
 
-        public void Save(Operation op)
+        public void Save(OperationCollection ops)
         {
-            if (op != null)
+            lock (ops)
             {
-                lock (op)
-                {
-                    IFormatter formatter = new BinaryFormatter();
-                    using (Stream stream = new FileStream(_filename, FileMode.Create, FileAccess.Write, FileShare.None))
-                        formatter.Serialize(stream, op);
-                }
-            }
-            else
-            {
-                if (File.Exists(_filename))
-                    File.Delete(_filename);
+                IFormatter formatter = new BinaryFormatter();
+                using (Stream stream = new FileStream(_filename, FileMode.Create, FileAccess.Write, FileShare.None))
+                    formatter.Serialize(stream, ops);
             }
         }
 

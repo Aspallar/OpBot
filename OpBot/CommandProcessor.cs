@@ -105,9 +105,9 @@ namespace OpBot
                     {
                         await EditCommand(e, cmd);
                     }
-                    else if (cmd.Command == "DEACTIVATE")
+                    else if (cmd.Command == "CLOSE")
                     {
-                        await DeactivateCommand(e, cmd);
+                        await CloseCommand(e, cmd);
                     }
                     else if (cmd.Command == "BIGTEXT")
                     {
@@ -156,7 +156,9 @@ namespace OpBot
             try
             {
                 channel = await _client.GetChannel(_opBotChannelId);
-                DiscordMessage message = await channel.GetMessage(e.OperationMessageId);
+                DiscordMessage message = await channel.GetMessage(e.MessageId);
+                _repository.Save(_ops);
+                await message.Edit($"{DiscordText.NoEntry} {DiscordText.BigText("closed")}  {message.Content}");
                 await message.Unpin();
             }
             catch (NotFoundException)
@@ -174,6 +176,7 @@ namespace OpBot
             try
             {
                 DiscordMessage message = await _client.GetMessage(_opBotChannelId, e.Operation.MessageId);
+                _repository.Save(_ops);
                 await message.Edit(e.Operation.GetOperationMessageText());
             }
             catch (NotFoundException)
@@ -254,7 +257,7 @@ namespace OpBot
             }
         }
 
-        private async Task DeactivateCommand(MessageCreateEventArgs e, ParsedCommand cmd)
+        private async Task CloseCommand(MessageCreateEventArgs e, ParsedCommand cmd)
         {
             int operationId = cmd.OperationId;
             if (operationId == 0)
@@ -272,14 +275,9 @@ namespace OpBot
             }
             bool success = await _ops.Delete(operationId);
             if (!success)
-            {
                 await SendOperationErrorMessage(e, operationId);
-            }
             else
-            {
-                _repository.Save(_ops);
-                await e.Channel.SendMessage($"Operation {DiscordText.BigText(operationId)} deactivated {DiscordText.OkHand}.");
-            }
+                await e.Channel.SendMessage($"Operation {DiscordText.BigText(operationId)} closed {DiscordText.OkHand}.");
         }
 
         private async Task AltCommand(MessageCreateEventArgs e, ParsedCommand cmd)
@@ -289,8 +287,6 @@ namespace OpBot
                 bool success = await _ops.SetOperationRoles(cmd.OperationId, _names.GetName(cmd.User), cmd.User.ID, cmd.CommandParts);
                 if (!success)
                     await SendOperationErrorMessage(e, cmd.OperationId);
-                else
-                    _repository.Save(_ops);
             }
             catch (OpBotInvalidValueException ex)
             {
@@ -347,8 +343,6 @@ namespace OpBot
             bool success = await _ops.DeleteOperationNote(cmd.OperationId, noteNumber - 1);
             if (!success)
                 await SendOperationErrorMessage(e, cmd.OperationId);
-            else
-                _repository.Save(_ops);
         }
 
         private async Task EditCommand(MessageCreateEventArgs e, ParsedCommand cmd)
@@ -365,8 +359,6 @@ namespace OpBot
                 bool success = await _ops.UpdateOperation(cmd.OperationId, opParams);
                 if (!success)
                     await SendOperationErrorMessage(e, cmd.OperationId);
-                else
-                    _repository.Save(_ops);
             }
             catch (OpBotInvalidValueException ex)
             {
@@ -463,8 +455,6 @@ namespace OpBot
             bool success = await _ops.RemoveSignup(cmd.OperationId, cmd.User.ID);
             if (!success)
                 await SendOperationErrorMessage(e, cmd.OperationId);
-            else
-                _repository.Save(_ops);
         }
 
         private async Task AddNoteCommand(MessageCreateEventArgs e, ParsedCommand cmd)
@@ -475,8 +465,6 @@ namespace OpBot
                 bool success = await _ops.AddOperationNote(cmd.OperationId, noteText);
                 if (!success)
                     await SendOperationErrorMessage(e, cmd.OperationId);
-                else
-                    _repository.Save(_ops);
             }
         }
 
@@ -488,8 +476,6 @@ namespace OpBot
 
             if (!success)
                 await SendOperationErrorMessage(e, cmd.OperationId);
-            else
-                _repository.Save(_ops);
         }
 
         private async Task SendOperationErrorMessage(MessageCreateEventArgs e, int operationId)

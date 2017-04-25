@@ -4,11 +4,11 @@ namespace OpBot
 {
     internal class OperationDeletedEventArgs : EventArgs
     {
-        public ulong OperationMessageId { get; internal set; }
+        public ulong MessageId { get; set; }
 
         public OperationDeletedEventArgs(ulong messageId)
         {
-            OperationMessageId = messageId;
+            MessageId = messageId;
         }
     }
 }

@@ -12,6 +12,7 @@ namespace OpBot
         private NicknameList _names = new NicknameList();
         private CommandProcessor _commandProcessor;
         private string _guildName = string.Empty;
+        private OperationCollection _ops;
 
         public async Task Run(string[] args)
         {
@@ -29,7 +30,7 @@ namespace OpBot
                 return;
             }
 
-            OperationCollection ops = operationRepository.Get();
+            _ops = operationRepository.Get();
 
             _client = new DiscordClient(new DiscordConfig()
             {
@@ -49,7 +50,7 @@ namespace OpBot
                 Repository = operationRepository,
                 AdminUsers = admins,
                 Client = _client,
-                Ops = ops,
+                Ops = _ops,
             });
 
             _client.MessageCreated += Client_MessageCreated;
@@ -105,9 +106,11 @@ namespace OpBot
 
         private async Task Client_GuildAvailable(GuildCreateEventArgs e)
         {
+            Console.WriteLine(nameof(Client_GuildAvailable));
             _guildName = e.Guild.Name;
             _names.RemoveAll(x => true);
             _names.Add(e.Guild.Members);
+            _ops.Start();
         }
 
         private async Task Client_GuildMemberUpdate(GuildMemberUpdateEventArgs e)

@@ -9,9 +9,49 @@ namespace OpBot
     [Serializable]
     internal class OperationCollection
     {
-        public const int MaxOperations = 64;
+        public const int MaxOperations = 14;  // if more than this needed then guild needs a proper raid planner, not discord
 
         private Operation[] _operations = new Operation[MaxOperations];
+
+        public void Start()
+        {
+            Task.Run(AutodeleteExpiredOperations);
+        }
+
+        private async Task AutodeleteExpiredOperations()
+        {
+            const int shortPeriod = 5000; // 5 seconds
+#if DEBUG
+            const int period = 10000;
+#else
+            const int period = 600000; // 10 minutes
+#endif
+            while (true)
+            {
+                DateTime now = DateTime.Now.ToUniversalTime();
+                ulong messageId = 0;
+                lock (this)
+                {
+                    int opIndex = Array.FindIndex(_operations, x => x != null && x.Date < now);
+                    if (opIndex != -1)
+                    {
+                        messageId = _operations[opIndex].MessageId;
+                        _operations[opIndex] = null;
+                    }
+                }
+                int delayLength;
+                if (messageId > 0)
+                {
+                    delayLength = shortPeriod;
+                    await _operationDeleted.InvokeAsync(new OperationDeletedEventArgs(messageId));
+                }
+                else
+                {
+                    delayLength = period;
+                }
+                await Task.Delay(delayLength);
+            }
+        }
 
         public Operation Add(Operation operation)
         {
@@ -245,6 +285,5 @@ namespace OpBot
         }
         [NonSerialized]
         private AsyncEvent<OperationUpdatedEventArgs> _operationUpdated = new AsyncEvent<OperationUpdatedEventArgs>();
-
     }
 }

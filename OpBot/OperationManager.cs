@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace OpBot
 {
     [Serializable]
-    internal class OperationCollection
+    internal class OperationManager
     {
         public const int MaxOperations = 14;  // if more than this needed then guild needs a proper raid planner, not discord
 
@@ -244,23 +244,15 @@ namespace OpBot
 
         private int GetNextOperationSlot()
         {
-            for (int k = 0; k < MaxOperations; k++)
-            {
-                if (_operations[k] == null)
-                    return k;
-            }
-            // TODO: proper exception
-            throw new Exception("The maximum amount of operations has been reached");
+            int slot = Array.FindIndex(_operations, x => x == null);
+            if (slot == -1)
+                throw new OperationException($"The maximum amount of operations, {MaxOperations}, has been reached.");
+            return slot;
         }
 
         private Operation GetDefaultOperation()
         {
-            for (int k = 0; k < MaxOperations; k++)
-            {
-                if (_operations[k] != null)
-                    return _operations[k];
-            }
-            return null;
+            return _operations.Where(x => x != null).FirstOrDefault();
         }
 
         public void WireUp()

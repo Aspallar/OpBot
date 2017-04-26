@@ -12,10 +12,5 @@ namespace OpBot
             string text = $"{version.Major}.{version.Minor}.{version.Build}";
             return text;
         }
-
-        public static bool IsOperationMode(string opMode)
-        {
-            return opMode == "SM" || opMode == "VM" || opMode == "MM";
-        }
     }
 }

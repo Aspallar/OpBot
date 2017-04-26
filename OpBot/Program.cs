@@ -12,7 +12,7 @@ namespace OpBot
         private NicknameList _names = new NicknameList();
         private CommandProcessor _commandProcessor;
         private string _guildName = string.Empty;
-        private OperationCollection _ops;
+        private OperationManager _ops;
 
         public async Task Run(string[] args)
         {

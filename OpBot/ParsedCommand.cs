@@ -2,26 +2,24 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace OpBot
 {
     class ParsedCommand
     {
-        public string Command { get; internal set; }
-        public string[] CommandParts { get; internal set; }
-        public int OperationId { get; internal set; }
-        public bool IsPermanent { get; internal set; }
-        public DiscordUser User { get; internal set; }
+        public string Command { get; private set; }
+        public string[] CommandParts { get; private set; }
+        public int OperationId { get; private set; }
+        public bool IsPermanent { get; private set; }
+        public DiscordUser User { get; private set; }
 
         private static readonly Regex _mentionsRegex = new Regex(@"\<@!?\d+\>");
 
         public ParsedCommand(MessageCreateEventArgs e, ulong opBotUserId)
         {
             if (e.Message.Mentions.Count > 2)
-                throw new CommandParseException("Thre are to many mentions in that command");
+                throw new CommandParseException("There are to many mentions in that command");
 
             var user = e.Message.Mentions.Where(m => m.ID != opBotUserId).SingleOrDefault();
             if (user == null)
@@ -70,6 +68,7 @@ namespace OpBot
         }
 
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA2204:Literals should be spelled correctly", MessageId = "OPn")]
         private void ParseOperation(string part)
         {
             int operationId = 0;

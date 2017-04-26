@@ -125,14 +125,6 @@ namespace OpBot
             }
         }
 
-        public void SetSizeFromString(string sizeString)
-        {
-            int size;
-            if (!int.TryParse(sizeString, out size))
-                throw new OpBotInvalidValueException("Invalid size, must be 8 or 16");
-            Size = size;
-        }
-
         public static string GetFullName(string shortCode)
         {
             OperationDesc op = _operationInfo.Where(x => x.ShortCode == shortCode).SingleOrDefault();
@@ -204,8 +196,6 @@ namespace OpBot
                 _notes = new List<string>();
             }
         }
-
-        public int NoteCount => _notes.Count;
 
         public void SetAltRoles(string username, ulong userid, string[] roles)
         {

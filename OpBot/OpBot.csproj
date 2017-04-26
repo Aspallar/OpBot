@@ -69,12 +69,14 @@
     <Compile Include="AltRole.cs" />
     <Compile Include="AsyncEvent.cs" />
     <Compile Include="CommandParseException.cs" />
+    <Compile Include="ErrorEmbed.cs" />
+    <Compile Include="OperationException.cs" />
     <Compile Include="OperationUpdatedEventArgs.cs" />
     <Compile Include="ParsedCommand.cs" />
     <Compile Include="CommandProcessorConfig.cs" />
     <Compile Include="Constants.cs" />
     <Compile Include="OperationDeletedEventArgs.cs" />
-    <Compile Include="OperationCollection.cs" />
+    <Compile Include="OperationManager.cs" />
     <Compile Include="OperationParameters.cs" />
     <Compile Include="DateHelper.cs" />
     <Compile Include="DiscordText.cs" />
@@ -89,7 +91,7 @@
     <Compile Include="OpBotUtils.cs" />
     <Compile Include="Operation.cs" />
     <Compile Include="OperationDesc.cs" />
-    <Compile Include="OperationException.cs" />
+    <Compile Include="OpBotInvalidValueException.cs" />
     <Compile Include="OperationMember.cs" />
     <Compile Include="OperationRepository.cs" />
     <Compile Include="Program.cs" />

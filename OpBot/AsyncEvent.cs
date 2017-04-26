@@ -13,6 +13,7 @@ namespace OpBot
     {
         private readonly object _lock = new object();
         internal static readonly object _synclock = new object();
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         private List<AsyncEventHandler> Handlers { get; set; }
 
         public AsyncEvent()
@@ -20,6 +21,7 @@ namespace OpBot
             this.Handlers = new List<AsyncEventHandler>();
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         public void Register(AsyncEventHandler handler)
         {
             if (handler == null)
@@ -29,6 +31,7 @@ namespace OpBot
                 this.Handlers.Add(handler);
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         public void Unregister(AsyncEventHandler handler)
         {
             if (handler == null)
@@ -38,6 +41,7 @@ namespace OpBot
                 this.Handlers.Remove(handler);
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         public async Task InvokeAsync()
         {
             if (!this.Handlers.Any())

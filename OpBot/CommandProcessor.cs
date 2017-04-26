@@ -4,23 +4,19 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using DSharpPlus;
-using System.Text.RegularExpressions;
 
 namespace OpBot
 {
     internal class CommandProcessor : IDisposable
     {
-        private static Object _operationLock = new Object();
-
         private readonly ulong _opBotUserId;
         private readonly NicknameList _names;
-        private readonly Regex _removeMentionsRegex = new Regex(@"\<@!?\d+\>");
         private readonly OperationRepository _repository;
         private readonly IAdminUser _adminUsers;
         private readonly MessageDeleter _messageDeleter;
         private readonly DiscordClient _client;
         private readonly ulong _opBotChannelId;
-        private readonly OperationCollection _ops;
+        private readonly OperationManager _ops;
 
         public CommandProcessor(CommandProcessorConfig config)
         {
@@ -153,11 +149,11 @@ namespace OpBot
         private async Task OperationDeleted(OperationDeletedEventArgs e)
         {
             DiscordChannel channel = null;
+            _repository.Save(_ops);
             try
             {
                 channel = await _client.GetChannel(_opBotChannelId);
                 DiscordMessage message = await channel.GetMessage(e.MessageId);
-                _repository.Save(_ops);
                 await message.Edit($"{DiscordText.NoEntry} {DiscordText.BigText("closed")}  {message.Content}");
                 await message.Unpin();
             }
@@ -173,16 +169,18 @@ namespace OpBot
 
         private async Task OperationUpdated(OperationUpdatedEventArgs e)
         {
+            DiscordChannel channel = null;
+            _repository.Save(_ops);
             try
             {
-                DiscordMessage message = await _client.GetMessage(_opBotChannelId, e.Operation.MessageId);
-                _repository.Save(_ops);
+                channel = await _client.GetChannel(_opBotChannelId);
+                DiscordMessage message = await channel.GetMessage(e.Operation.MessageId);
                 await message.Edit(e.Operation.GetOperationMessageText());
             }
             catch (NotFoundException)
             {
-                // TODO: something better here
-                Console.WriteLine($"ERROR: unable to find operation {e.Operation.Id}");
+                if (channel != null)
+                    await SendError(channel, "I was unable to update the operation message. Someone appears to have deleted the operation");
             }
         }
 
@@ -501,12 +499,14 @@ namespace OpBot
                 DiscordMessage newOpMessage = await e.Channel.SendMessage("Creating event...");
                 newOperation.MessageId = newOpMessage.ID;
 
-                string text;
-                lock (_operationLock)
-                    text = _ops.Add(newOperation).GetOperationMessageText();
+                string text = _ops.Add(newOperation).GetOperationMessageText();
                 await newOpMessage.Edit(text);
                 await PinMessage(e, newOpMessage);
                 _repository.Save(_ops);
+            }
+            catch (OperationException ex)
+            {
+                await SendError(e, ex.Message);
             }
             catch (OpBotInvalidValueException opEx)
             {
@@ -551,18 +551,6 @@ namespace OpBot
             }
         }
 
-        private async Task UnpinMessage(MessageCreateEventArgs e, DiscordMessage message)
-        {
-            try
-            {
-                await message.Unpin();
-            }
-            catch (UnauthorizedException)
-            {
-                await SendError(e, NeedManagePermission("unpin the previous operation"));
-            }
-        }
-
         private static string NeedManagePermission(string actionText)
         {
             return $"I am unable to {actionText} as I do not appear to have the necessary 'Manage Messages' permission.";
@@ -592,20 +580,16 @@ namespace OpBot
             }
         }
 
+        private async Task SendError(DiscordChannel channel, string errorText)
+        {
+            ErrorEmbed errorEmbed = new ErrorEmbed(errorText);
+            await channel.SendMessage("", embed: errorEmbed);
+        }
+
         private async Task SendError(MessageCreateEventArgs e, string errorText)
         {
-            DiscordEmbed errorEmbed = new DiscordEmbed()
-            {
-                Color = 0xad1313,
-                Title = "Error",
-                Url = Constants.InstrucionUrl,
-                Thumbnail = new DiscordEmbedThumbnail()
-                {
-                    Url = "https://raw.githubusercontent.com/wiki/Aspallar/OpBot/images/2-128.png",
-                },
-                Description = $"I'm very sorry {_names.GetName(e.Message.Author)} but...\n" + errorText,
-            };
-            await e.Message.Respond("", embed: errorEmbed);
+            errorText = $"I'm very sorry {_names.GetName(e.Message.Author)} but...\n" + errorText;
+            await SendError(e.Channel, errorText);
         }
 
 

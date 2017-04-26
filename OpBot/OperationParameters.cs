@@ -5,10 +5,10 @@ namespace OpBot
     internal class OperationParameters
     {
 
-        public string OperationCode { get; internal set; }
-        public string Day { get; internal set; }
-        public int Size { get; internal set; }
-        public string Mode { get; internal set; }
+        public string OperationCode { get; private set; }
+        public string Day { get; private set; }
+        public int Size { get; private set; }
+        public string Mode { get; private set; }
 
         private TimeSpan _time;
         private bool _hasTime;
@@ -19,7 +19,7 @@ namespace OpBot
             {
                 return _time;
             }
-            internal set
+            private set
             {
                 _hasTime = true;
                 _time = value;

@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 namespace OpBot
 {
     [Serializable]
-    internal class CommandParseException : Exception
+    public class CommandParseException : Exception
     {
         public CommandParseException()
         {

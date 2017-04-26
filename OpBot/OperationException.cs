@@ -1,16 +1,25 @@
 ﻿using System;
+using System.Runtime.Serialization;
 
 namespace OpBot
 {
     [Serializable]
-    public class OpBotInvalidValueException : Exception
+    public class OperationException : Exception
     {
-        public OpBotInvalidValueException() { }
-        public OpBotInvalidValueException(string message) : base(message) { }
-        public OpBotInvalidValueException(string message, Exception inner) : base(message, inner) { }
-        protected OpBotInvalidValueException(
-          System.Runtime.Serialization.SerializationInfo info,
-          System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
-    }    
+        public OperationException()
+        {
+        }
 
+        public OperationException(string message) : base(message)
+        {
+        }
+
+        public OperationException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
+
+        protected OperationException(SerializationInfo info, StreamingContext context) : base(info, context)
+        {
+        }
+    }
 }

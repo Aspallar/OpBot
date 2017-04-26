@@ -13,20 +13,20 @@ namespace OpBot
             _filename = fileName;
         }
 
-        public OperationCollection Get()
+        public OperationManager Get()
         {
-            OperationCollection ops = new OperationCollection();
+            OperationManager ops = new OperationManager();
             if (!File.Exists(_filename))
                 return ops;
 
             IFormatter formatter = new BinaryFormatter();
             using (Stream stream = new FileStream(_filename, FileMode.Open, FileAccess.Read, FileShare.Read))
-                ops = (OperationCollection)formatter.Deserialize(stream);
+                ops = (OperationManager)formatter.Deserialize(stream);
             ops.WireUp();
             return ops;
         }
 
-        public void Save(OperationCollection ops)
+        public void Save(OperationManager ops)
         {
             lock (ops)
             {

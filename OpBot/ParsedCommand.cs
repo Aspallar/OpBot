@@ -21,10 +21,8 @@ namespace OpBot
             if (e.Message.Mentions.Count > 2)
                 throw new CommandParseException("There are to many mentions in that command");
 
-            var user = e.Message.Mentions.Where(m => m.ID != opBotUserId).SingleOrDefault();
-            if (user == null)
-                user = e.Message.Author;
-            User = user ?? e.Message.Author;
+            var mentionedUser = e.Message.Mentions.Where(m => m.ID != opBotUserId).SingleOrDefault();
+            User = mentionedUser ?? e.Message.Author;
 
             string contentWithNoMentions = _mentionsRegex.Replace(e.Message.Content, string.Empty);
             string[] parts = contentWithNoMentions.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);

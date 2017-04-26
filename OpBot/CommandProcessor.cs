@@ -149,7 +149,7 @@ namespace OpBot
         private async Task OperationDeleted(OperationDeletedEventArgs e)
         {
             DiscordChannel channel = null;
-            _repository.Save(_ops);
+            await _repository.SaveAsync(_ops);
             try
             {
                 channel = await _client.GetChannel(_opBotChannelId);
@@ -170,7 +170,7 @@ namespace OpBot
         private async Task OperationUpdated(OperationUpdatedEventArgs e)
         {
             DiscordChannel channel = null;
-            _repository.Save(_ops);
+            await _repository.SaveAsync(_ops);
             try
             {
                 channel = await _client.GetChannel(_opBotChannelId);
@@ -502,7 +502,7 @@ namespace OpBot
                 string text = _ops.Add(newOperation).GetOperationMessageText();
                 await newOpMessage.Edit(text);
                 await PinMessage(e, newOpMessage);
-                _repository.Save(_ops);
+                await _repository.SaveAsync(_ops);
             }
             catch (OperationException ex)
             {

@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Threading.Tasks;
 
 namespace OpBot
 {
@@ -24,6 +25,11 @@ namespace OpBot
                 ops = (OperationManager)formatter.Deserialize(stream);
             ops.WireUp();
             return ops;
+        }
+
+        public Task SaveAsync(OperationManager ops)
+        {
+            return Task.Run(() => Save(ops));
         }
 
         public void Save(OperationManager ops)

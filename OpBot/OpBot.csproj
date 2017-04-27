@@ -69,6 +69,7 @@
     <Compile Include="AltRole.cs" />
     <Compile Include="AsyncEvent.cs" />
     <Compile Include="CommandParseException.cs" />
+    <Compile Include="DefaultOperations.cs" />
     <Compile Include="ErrorEmbed.cs" />
     <Compile Include="OperationException.cs" />
     <Compile Include="OperationUpdatedEventArgs.cs" />

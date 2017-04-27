@@ -179,6 +179,12 @@ namespace OpBot
             return true;
         }
 
+        internal bool IsActiveOperation(int operationId)
+        {
+            lock (this)
+                return _operations[operationId - 1] != null;
+        }
+
         public async Task<bool> DeleteOperationNote(int operationId, int noteIndex)
         {
             Operation op;

@@ -17,6 +17,7 @@ namespace OpBot
         private readonly DiscordClient _client;
         private readonly ulong _opBotChannelId;
         private readonly OperationManager _ops;
+        private readonly DefaultOperations _defaultOperations;
 
         public CommandProcessor(CommandProcessorConfig config)
         {
@@ -27,6 +28,7 @@ namespace OpBot
             _client = config.Client;
             _opBotChannelId = config.OpBotChannelId;
             _messageDeleter = new MessageDeleter();
+            _defaultOperations = new DefaultOperations();
             _ops = config.Ops;
             _ops.OperationDeleted += OperationDeleted;
             _ops.OperationUpdated += OperationUpdated;
@@ -49,7 +51,7 @@ namespace OpBot
 
             try
             {
-                ParsedCommand cmd = new ParsedCommand(e, _opBotUserId);
+                ParsedCommand cmd = new ParsedCommand(e, _defaultOperations[e.Message.Author.ID], _opBotUserId);
 
                 if (cmd.CommandParts.Length == 0)
                 {
@@ -121,6 +123,10 @@ namespace OpBot
                     {
                         await ListCommand(e);
                     }
+                    else if (cmd.Command == "OP" || cmd.Command == "SETOP")
+                    {
+                        await SetOperationCommand(e, cmd);
+                    }
                     else if (cmd.Command == "PURGE")
                     {
                         await PurgeCommand(e);
@@ -136,6 +142,22 @@ namespace OpBot
                 await SendError(e, ex.Message);
             }
 
+        }
+
+        private async Task SetOperationCommand(MessageCreateEventArgs e, ParsedCommand cmd)
+        {
+            int operationId;
+            
+            if (cmd.CommandParts.Length != 2
+                || !int.TryParse(cmd.CommandParts[1], out operationId)
+                || operationId < 1
+                || operationId > OperationManager.MaxOperations
+                || !_ops.IsActiveOperation(operationId))
+            {
+                await SendError(e, "That's an invalid set operation command.");
+                return;
+            }
+            _defaultOperations[e.Message.Author.ID] = operationId;
         }
 
         private async Task ListCommand(MessageCreateEventArgs e)

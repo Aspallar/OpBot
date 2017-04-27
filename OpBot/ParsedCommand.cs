@@ -16,10 +16,12 @@ namespace OpBot
 
         private static readonly Regex _mentionsRegex = new Regex(@"\<@!?\d+\>");
 
-        public ParsedCommand(MessageCreateEventArgs e, ulong opBotUserId)
+        public ParsedCommand(MessageCreateEventArgs e, int defaultOperationId, ulong opBotUserId)
         {
             if (e.Message.Mentions.Count > 2)
                 throw new CommandParseException("There are to many mentions in that command");
+
+            OperationId = defaultOperationId;
 
             var mentionedUser = e.Message.Mentions.Where(m => m.ID != opBotUserId).SingleOrDefault();
             User = mentionedUser ?? e.Message.Author;
@@ -61,7 +63,7 @@ namespace OpBot
                 ParseOperation(part);
                 return;
             }
-
+            
             throw new CommandParseException($"I don't understand \"{part}\"");
         }
 

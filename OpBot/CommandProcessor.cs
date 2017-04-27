@@ -209,7 +209,7 @@ namespace OpBot
 
         private async Task VersionCommand(MessageCreateEventArgs e)
         {
-            string text = "Version: " + DiscordText.BigText(OpBotUtils.GetVersionText()) + "\nBETA";
+            string text = "Version: " + DiscordText.BigText(OpBotUtils.GetVersionText());
             await e.Channel.SendMessage(text);
         }
 

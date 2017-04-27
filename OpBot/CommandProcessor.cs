@@ -280,18 +280,20 @@ namespace OpBot
         private async Task CloseCommand(MessageCreateEventArgs e, ParsedCommand cmd)
         {
             int operationId = cmd.OperationId;
-            if (operationId == 0)
+            if (cmd.CommandParts.Length < 2)
             {
-                if (cmd.CommandParts.Length < 2)
-                {
-                    await SendError(e, "You must specify an operation to deactivate.");
-                    return;
-                }
-                if (!int.TryParse(cmd.CommandParts[1], out operationId) || operationId < 0)
-                {
-                    await SendError(e, $"{cmd.CommandParts[1]} is not a valid operation number");
-                    return;
-                }
+                await SendError(e, "You must specify an operation to deactivate.");
+                return;
+            }
+            if (cmd.CommandParts.Length > 2)
+            {
+                await SendError(e, "That's too many parameters for an close command.");
+                return;
+            }
+            if (!int.TryParse(cmd.CommandParts[1], out operationId) || operationId < 0)
+            {
+                await SendError(e, $"{cmd.CommandParts[1]} is not a valid operation number");
+                return;
             }
             bool success = await _ops.Delete(operationId);
             if (!success)

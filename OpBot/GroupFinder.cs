@@ -5,7 +5,7 @@ namespace OpBot
 {
     internal static class GroupFinder
     {
-        private static readonly string[] order = { "SV", "EV", "DF", "RAV", "KP", "EC", "TOS", "TFB", "DP" };
+        private static readonly string[] order = { "SV", "EV", "DF", "RAV", "KP", "EC", "MG", "TOS", "TFB", "DP" };
         private static readonly DateTime baseDate = new DateTime(2017, 4, 23);
 
         public static string OperationOn(DateTime dt)

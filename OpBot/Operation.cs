@@ -29,7 +29,7 @@ namespace OpBot
             new OperationDesc() { ShortCode="DP", FullName = "The Dread Palace" },
             new OperationDesc() { ShortCode="RAV", FullName = "The Ravagers" },
             new OperationDesc() { ShortCode="TOS", FullName = "Temple of Sacrifice" },
-            new OperationDesc() { ShortCode="TY", FullName = "Tyth" },
+            new OperationDesc() { ShortCode="MG", FullName = "Valley of the Machine Gods" },
             new OperationDesc() { ShortCode="WB", FullName = "World Boss" },
             new OperationDesc() { ShortCode="TC", FullName = "Toborro's Courtyard" },
             new OperationDesc() { ShortCode="XEN", FullName = "Xenoanalyst II" },

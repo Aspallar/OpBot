@@ -147,16 +147,28 @@ namespace OpBot
         private async Task SetOperationCommand(MessageCreateEventArgs e, ParsedCommand cmd)
         {
             int operationId;
-            
-            if (cmd.CommandParts.Length != 2
-                || !int.TryParse(cmd.CommandParts[1], out operationId)
+
+            if (cmd.CommandParts.Length < 2)
+            {
+                await SendError(e, "You must supply an operation number.");
+                return;
+            }
+
+            if (cmd.CommandParts.Length != 2)
+            {
+                await SendError(e, "Too many parameters supplied. Only specify the operation number.");
+                return;
+            }
+
+            if (!int.TryParse(cmd.CommandParts[1], out operationId)
                 || operationId < 1
                 || operationId > OperationManager.MaxOperations
                 || !_ops.IsActiveOperation(operationId))
             {
-                await SendError(e, "That's an invalid set operation command.");
+                await SendError(e, $"{cmd.CommandParts[1]} is not a valid operation number.");
                 return;
             }
+
             _defaultOperations[e.Message.Author.ID] = operationId;
         }
 

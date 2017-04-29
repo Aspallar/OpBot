@@ -63,6 +63,16 @@ namespace OpBot
                 ParseOperation(part);
                 return;
             }
+
+            int operationId;
+            if (int.TryParse(part.Substring(1), out operationId))
+            {
+                if (operationId > 1)
+                {
+                    OperationId = operationId;
+                    return;
+                }
+            }
             
             throw new CommandParseException($"I don't understand \"{part}\"");
         }

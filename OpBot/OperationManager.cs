@@ -11,6 +11,8 @@ namespace OpBot
         public const int MaxOperations = 14;  // if more than this needed then guild needs a proper raid planner, not discord
 
         private Operation[] _operations = new Operation[MaxOperations];
+
+        [NonSerialized]
         private bool _started = false;
 
         public void Start()

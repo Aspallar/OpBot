@@ -34,13 +34,12 @@ namespace OpBot
 
         public void Save(OperationManager ops)
         {
+            IFormatter formatter = new BinaryFormatter();
             lock (ops)
             {
-                IFormatter formatter = new BinaryFormatter();
                 using (Stream stream = new FileStream(_filename, FileMode.Create, FileAccess.Write, FileShare.None))
                     formatter.Serialize(stream, ops);
             }
         }
-
     }
 }

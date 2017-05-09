@@ -102,23 +102,21 @@ namespace OpBot
             await Greeting.Greet(greetingsChannelId, _client, _names.GetName(e.Member.User), _guildName);
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
-
-        private async Task Client_GuildAvailable(GuildCreateEventArgs e)
+        private Task Client_GuildAvailable(GuildCreateEventArgs e)
         {
             Console.WriteLine(nameof(Client_GuildAvailable));
             _guildName = e.Guild.Name;
             _names.RemoveAll(x => true);
             _names.Add(e.Guild.Members);
             _ops.Start();
+            return Task.Delay(0);
         }
 
-        private async Task Client_GuildMemberUpdate(GuildMemberUpdateEventArgs e)
+        private Task Client_GuildMemberUpdate(GuildMemberUpdateEventArgs e)
         {
             _names.Update(e.User.ID, e.NickName);
+            return Task.Delay(0);
         }
-
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
 
     }
 }

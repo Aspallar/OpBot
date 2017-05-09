@@ -13,7 +13,7 @@ namespace OpBot
         private readonly NicknameList _names;
         private readonly OperationRepository _repository;
         private readonly IAdminUser _adminUsers;
-        private readonly MessageDeleter _messageDeleter;
+        private MessageDeleter _messageDeleter;
         private readonly DiscordClient _client;
         private readonly ulong _opBotChannelId;
         private readonly OperationManager _ops;
@@ -552,7 +552,7 @@ namespace OpBot
 
         private async Task RepostCommand(MessageCreateEventArgs e)
         {
-            await e.Message.Respond("Sorry the repost command is not implemenetd in this version");
+            await e.Message.Respond("Sorry the repost command is not implemented in this version");
             //if (!CheckForOperation(e))
             //    return;
 
@@ -651,6 +651,7 @@ namespace OpBot
             if (_messageDeleter != null)
             {
                 _messageDeleter.Dispose();
+                _messageDeleter = null;
             }
         }
     }

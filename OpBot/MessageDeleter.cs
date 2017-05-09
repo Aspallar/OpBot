@@ -52,15 +52,18 @@ namespace OpBot
             }
             if (message != null)
             {
-                try
+                System.Threading.Tasks.Task.Run(async () =>
                 {
-                    message.Delete().GetAwaiter().GetResult();
-                }
-                catch (NotFoundException)
-                {
-                    // it is not an error if message not found
-                    // as it may have been manually deleted
-                }
+                    try
+                    {
+                        await message.Delete();
+                    }
+                    catch (NotFoundException)
+                    {
+                        // it is not an error if message not found
+                        // as it may have been manually deleted
+                    }
+                });
             }
         }
 

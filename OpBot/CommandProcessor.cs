@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using DSharpPlus;
+using NeoSmart.AsyncLock;
 
 namespace OpBot
 {
@@ -18,6 +19,8 @@ namespace OpBot
         private readonly ulong _opBotChannelId;
         private readonly OperationManager _ops;
         private readonly DefaultOperations _defaultOperations;
+        private SwtorAvailablePoll _swtorAvailablePoll;
+        private AsyncLock _asyncLock;
 
         public CommandProcessor(CommandProcessorConfig config)
         {
@@ -29,8 +32,9 @@ namespace OpBot
             _opBotChannelId = config.OpBotChannelId;
             _messageDeleter = new MessageDeleter();
             _defaultOperations = new DefaultOperations();
+            _asyncLock = new AsyncLock();
             _ops = config.Ops;
-            _ops.OperationDeleted += OperationDeleted;
+            _ops.OperationDeleted += OperationClosed;
             _ops.OperationUpdated += OperationUpdated;
         }
 
@@ -127,6 +131,14 @@ namespace OpBot
                     {
                         await SetOperationCommand(e, cmd);
                     }
+                    else if (cmd.Command == "MONITOR")
+                    {
+                        await MonitorCommand(e, cmd);
+                    }
+                    else if (cmd.Command == "MSG" || cmd.Command == "MESSAGE")
+                    {
+                        await MessageCommand(e, cmd);
+                    }
                     else if (cmd.Command == "PURGE")
                     {
                         await PurgeCommand(e);
@@ -142,6 +154,84 @@ namespace OpBot
                 await SendError(e, ex.Message);
             }
 
+        }
+
+        private async Task MessageCommand(MessageCreateEventArgs e, ParsedCommand cmd)
+        {
+            if (!CheckIsAdminUser(e, "MESSAGE") || cmd.CommandParts.Length == 1)
+                return;
+            await e.Message.Delete();
+            await e.Channel.SendMessage(string.Join(" ", cmd.CommandParts, 1, cmd.CommandParts.Length - 1));
+        }
+
+        private async Task MonitorCommand(MessageCreateEventArgs e, ParsedCommand cmd)
+        {
+            int numParts = cmd.CommandParts.Length;
+
+            if (numParts > 2 || (numParts == 2 && cmd.CommandParts[1].ToUpperInvariant() != "STOP"))
+            {
+                await SendError(e, "There are invalid arguments in the monitor command.");
+                return;
+            }
+
+            if (numParts != 2)
+                await StartTwitterPoll(e);
+            else
+                await StopTwittorPoll(e);
+        }
+
+        private async Task StartTwitterPoll(MessageCreateEventArgs e)
+        {
+            bool alreadyStarted = false;
+            using (await _asyncLock.LockAsync())
+            {
+                alreadyStarted = _swtorAvailablePoll != null;
+                if (!alreadyStarted)
+                {
+                    _swtorAvailablePoll = new SwtorAvailablePoll();
+                    _swtorAvailablePoll.ServersAvailable += SwtorAvailablePoll_ServersAvailable;
+                    _swtorAvailablePoll.Start(e.Channel);
+                }
+            }
+            if (alreadyStarted)
+                await SendError(e, "I am already monitoring twitter");
+            else
+                await e.Message.Respond($"{DiscordText.OkHand} Monitoring twitter for 'servers are available' tweet....");
+        }
+
+        private async Task StopTwittorPoll(MessageCreateEventArgs e)
+        {
+            bool alreadyStopped = false;
+            using (await _asyncLock.LockAsync())
+            {
+                alreadyStopped = _swtorAvailablePoll == null;
+                if (!alreadyStopped)
+                    await EndTwitterPoll();
+            }
+            if (alreadyStopped)
+                await SendError(e, "I am not montoring twitter!\nI cannot stop doing something I'm not doing! Stupid meat-bag.");
+            else
+                await e.Message.Respond($"{DiscordText.OkHand} Stopped.");
+        }
+
+        private async Task EndTwitterPoll()
+        {
+            try { await _swtorAvailablePoll.Stop(); } catch (TaskCanceledException) { }
+            _swtorAvailablePoll.Dispose();
+            _swtorAvailablePoll = null;
+        }
+
+        private async Task SwtorAvailablePoll_ServersAvailable(ServersAvailableEventArgs e)
+        {
+            using (await _asyncLock.LockAsync())
+            {
+                if (_swtorAvailablePoll != null)
+                    await EndTwitterPoll();
+            }
+            if (e.Expired)
+                await SendError(e.Channel, "I have stopped monitoring twitter because it has taken too long for the tweet to happen.");
+            else
+                await e.Channel.SendMessage($"{DiscordText.BigText("servers\navailable")}\nAccording to twitter it looks like the servers might be back up and running. Can't say for sure though, you meat-bags can be very imprecise in your tweets.");
         }
 
         private async Task SetOperationCommand(MessageCreateEventArgs e, ParsedCommand cmd)
@@ -180,7 +270,7 @@ namespace OpBot
             await e.Message.Respond(text);
         }
 
-        private async Task OperationDeleted(OperationDeletedEventArgs e)
+        private async Task OperationClosed(OperationDeletedEventArgs e)
         {
             DiscordChannel channel = null;
             await _repository.SaveAsync(_ops);

@@ -43,6 +43,10 @@
       <HintPath>..\packages\DSharpPlus.1.5.0-rc1\lib\DSharpPlus.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="NeoSmart.AsyncLock, Version=0.3.0.2, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\NeoSmart.AsyncLock.0.3.0.2\lib\net45\NeoSmart.AsyncLock.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\DSharpPlus.1.5.0-rc1\lib\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
@@ -102,7 +106,10 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
+    <Compile Include="ServersAvailableEventArgs.cs" />
     <Compile Include="Settings.cs" />
+    <Compile Include="SwtorAvailablePoll.cs" />
+    <Compile Include="SwtorAvailableQuery.cs" />
     <Compile Include="TimeZones.cs" />
     <Compile Include="TimeZoneTime.cs" />
   </ItemGroup>

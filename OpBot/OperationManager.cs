@@ -23,10 +23,10 @@ namespace OpBot
                     return;
                 _started = true;
             }
-            Task.Run(AutodeleteExpiredOperations);
+            Task.Run(AutoCloseExpiredOperations);
         }
 
-        private async Task AutodeleteExpiredOperations()
+        private async Task AutoCloseExpiredOperations()
         {
             const int shortPeriod = 5000; // 5 seconds
 #if DEBUG

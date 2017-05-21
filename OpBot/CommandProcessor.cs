@@ -97,7 +97,7 @@ namespace OpBot
                     }
                     else if (cmd.Command == "REPOST")
                     {
-                        await RepostCommand(e);
+                        await RepostCommand(e, cmd);
                     }
                     else if (cmd.Command == "RAIDTIMES")
                     {
@@ -160,7 +160,9 @@ namespace OpBot
         {
             if (!CheckIsAdminUser(e, "MESSAGE") || cmd.CommandParts.Length == 1)
                 return;
+            await Task.Delay(100);
             await e.Message.Delete();
+            await Task.Delay(100);
             await e.Channel.SendMessage(string.Join(" ", cmd.CommandParts, 1, cmd.CommandParts.Length - 1));
         }
 
@@ -640,11 +642,21 @@ namespace OpBot
             }
         }
 
-        private async Task RepostCommand(MessageCreateEventArgs e)
+        private async Task RepostCommand(MessageCreateEventArgs e, ParsedCommand cmd)
         {
-            await e.Message.Respond("Sorry the repost command is not implemented in this version");
-            //if (!CheckForOperation(e))
-            //    return;
+            IReadOnlyOperation[] ops = _ops.GetOperationsByDateDesc();
+            for (int k = 0; k < ops.Length; k++)
+            {
+                IReadOnlyOperation op = ops[k];
+                DiscordMessage newMessage = await e.Channel.SendMessage(op.GetOperationMessageText());
+                ulong oldMessageId = _ops.UpdateMessageId(op.Id, newMessage.ID);
+                DiscordMessage oldMessage = await e.Channel.GetMessage(oldMessageId);
+                try { await oldMessage.Delete(); } catch (NotFoundException) { }
+                await Task.Delay(250);
+                await PinMessage(e, newMessage);
+                if (k != ops.Length - 1)
+                    await Task.Delay(3000);
+            }
 
             //DiscordMessage previousOperationMessage;
 

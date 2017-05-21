@@ -75,6 +75,7 @@
     <Compile Include="CommandParseException.cs" />
     <Compile Include="DefaultOperations.cs" />
     <Compile Include="ErrorEmbed.cs" />
+    <Compile Include="IReadOnlyOperation.cs" />
     <Compile Include="OperationException.cs" />
     <Compile Include="OperationUpdatedEventArgs.cs" />
     <Compile Include="ParsedCommand.cs" />

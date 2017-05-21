@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -61,7 +62,7 @@ namespace OpBot
             }
         }
 
-        public Operation Add(Operation operation)
+        public IReadOnlyOperation Add(Operation operation)
         {
             lock (this)
             {
@@ -283,6 +284,13 @@ namespace OpBot
         [NonSerialized]
         private AsyncEvent<OperationDeletedEventArgs> _operationDeleted = new AsyncEvent<OperationDeletedEventArgs>();
 
+        public IReadOnlyOperation[] GetOperationsByDateDesc()
+        {
+            lock (this)
+            {
+                return _operations.Where(x => x != null).OrderByDescending(x => x.Date).ToArray();
+            }
+        }
 
         public event AsyncEventHandler<OperationUpdatedEventArgs> OperationUpdated
         {
@@ -291,5 +299,18 @@ namespace OpBot
         }
         [NonSerialized]
         private AsyncEvent<OperationUpdatedEventArgs> _operationUpdated = new AsyncEvent<OperationUpdatedEventArgs>();
+
+        internal ulong UpdateMessageId(int id, ulong newMessageID)
+        {
+            lock (this)
+            {
+                int index = id - 1;
+                if (_operations[index] == null)
+                    return 0;
+                ulong messageId = _operations[index].MessageId;
+                _operations[index].MessageId = newMessageID;
+                return messageId;
+            }
+        }
     }
 }

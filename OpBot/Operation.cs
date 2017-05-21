@@ -6,7 +6,7 @@ using System.Text;
 namespace OpBot
 {
     [Serializable]
-    internal class Operation
+    internal class Operation : IReadOnlyOperation
     {
         private string _operationName;
         private int _size;

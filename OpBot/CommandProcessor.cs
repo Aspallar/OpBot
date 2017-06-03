@@ -568,9 +568,9 @@ namespace OpBot
         {
             if (!_adminUsers.IsAdmin(e.Message.Author.ID))
             {
-                SendError(e, $"You are not an administrator.\n\nYou need to be an administrator to use the *{commandName}* command.")
-                    .GetAwaiter()
-                    .GetResult();
+                Task.Run(async () => {
+                    await SendError(e, $"You are not an administrator.\n\nYou need to be an administrator to use the *{commandName}* command.");
+                });
                 return false;
             }
             return true;
@@ -657,23 +657,6 @@ namespace OpBot
                 if (k != ops.Length - 1)
                     await Task.Delay(3000);
             }
-
-            //DiscordMessage previousOperationMessage;
-
-            //try
-            //{
-            //    previousOperationMessage = await e.Channel.GetMessage(Operation.MessageId);
-            //}
-            //catch (NotFoundException)
-            //{
-            //    previousOperationMessage = null;
-            //}
-            //DiscordMessage newOperationMessage = await e.Channel.SendMessage(Operation.GetOperationMessageText());
-            //Operation.MessageId = newOperationMessage.ID;
-            //await PinMessage(e, newOperationMessage);
-            //if (previousOperationMessage != null)
-            //    await previousOperationMessage.Delete();
-            //_repository.Save(Operation);
         }
 
 

@@ -104,7 +104,6 @@ namespace OpBot
 
         private Task Client_GuildAvailable(GuildCreateEventArgs e)
         {
-            Console.WriteLine(nameof(Client_GuildAvailable));
             _guildName = e.Guild.Name;
             _names.RemoveAll(x => true);
             _names.Add(e.Guild.Members);

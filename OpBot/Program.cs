@@ -13,6 +13,7 @@ namespace OpBot
         private CommandProcessor _commandProcessor;
         private string _guildName = string.Empty;
         private OperationManager _ops;
+        private DevTracker _devTracker;
 
         public async Task Run(string[] args)
         {
@@ -31,6 +32,9 @@ namespace OpBot
             }
 
             _ops = operationRepository.Get();
+
+            if (Properties.Settings.Default.devTrackerChannel != 0)
+                _devTracker = new DevTracker();
 
             _client = new DiscordClient(new DiscordConfig()
             {
@@ -70,10 +74,13 @@ namespace OpBot
             }
 
             Console.ReadKey();
+
+            if (_devTracker != null)
+            {
+                try { await _devTracker.Stop(); } catch (TaskCanceledException) { }
+                _devTracker.Dispose();
+            }
             await _client.Disconnect();
-
-            //operationRepository.Save(_commandProcessor.Operation);
-
             _client.Dispose();
         }
 
@@ -102,13 +109,13 @@ namespace OpBot
             await Greeting.Greet(greetingsChannelId, _client, _names.GetName(e.Member.User), _guildName);
         }
 
-        private Task Client_GuildAvailable(GuildCreateEventArgs e)
+        private async Task Client_GuildAvailable(GuildCreateEventArgs e)
         {
             _guildName = e.Guild.Name;
             _names.RemoveAll(x => true);
             _names.Add(e.Guild.Members);
             _ops.Start();
-            return Task.Delay(0);
+            _devTracker?.Start(await _client.GetChannelByID(Properties.Settings.Default.devTrackerChannel));
         }
 
         private Task Client_GuildMemberUpdate(GuildMemberUpdateEventArgs e)

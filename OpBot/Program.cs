@@ -115,7 +115,24 @@ namespace OpBot
             _names.RemoveAll(x => true);
             _names.Add(e.Guild.Members);
             _ops.Start();
-            _devTracker?.Start(await _client.GetChannelByID(Properties.Settings.Default.devTrackerChannel));
+            if (_devTracker != null)
+                await StartDevTracker();
+        }
+
+        private async Task StartDevTracker()
+        {
+            System.Diagnostics.Debug.Assert(_devTracker != null);
+            ulong devTrackerChannelId = Properties.Settings.Default.devTrackerChannel;
+            try
+            {
+                _devTracker.Start(await _client.GetChannelByID(devTrackerChannelId));
+            }
+            catch (NotFoundException)
+            {
+                _devTracker.Dispose();
+                _devTracker = null;
+                Console.WriteLine($"Warning: Cannot find devtracker channel {devTrackerChannelId}. Devtracker disabled.");
+            }
         }
 
         private Task Client_GuildMemberUpdate(GuildMemberUpdateEventArgs e)

@@ -42,7 +42,7 @@ namespace OpBot
         public async Task Poll()
         {
 #if DEBUG
-            const int pollPeriod = 90000;
+            const int pollPeriod = 240000;
 #else
             const int pollPeriod = 600000;
 #endif

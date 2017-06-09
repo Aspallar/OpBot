@@ -11,6 +11,10 @@ namespace OpBot
         public static string OperationOn(DateTime dt)
         {
             int opIndex = GetOrderIndex(dt);
+            if (dt.TimeOfDay.TotalHours < 12)
+            {
+                opIndex = opIndex > 0 ? opIndex - 1 : order.Length - 1;
+            }
             return order[opIndex];
         }
 

@@ -16,7 +16,13 @@ namespace OpBot
 
         public static string BigText(int value)
         {
-            return BigText(value.ToString());
+            StringBuilder bigtext = new StringBuilder();
+            do
+            {
+                bigtext.Append(_digits[value % 10]);
+                value /= 10;
+            } while (value > 0);
+            return bigtext.ToString();
         }
 
         public static string BigText(string text)

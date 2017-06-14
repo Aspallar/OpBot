@@ -21,6 +21,7 @@ namespace OpBot
         private readonly DefaultOperations _defaultOperations;
         private SwtorAvailablePoll _swtorAvailablePoll;
         private AsyncLock _asyncLock;
+        private AlertMembers _alertMembers;
 
         public CommandProcessor(CommandProcessorConfig config)
         {
@@ -143,6 +144,14 @@ namespace OpBot
                     {
                         await PurgeCommand(e);
                     }
+                    else if (cmd.Command == "PM")
+                    {
+                        await PersonalMessageCommand(e, cmd);
+                    }
+                    else if (cmd.Command == "ALERTME")
+                    {
+                        await AlertMeCommand(e, cmd);
+                    }
                     else
                     {
                         await SendError(e, $"That is not a command that I recognize.");
@@ -154,6 +163,20 @@ namespace OpBot
                 await SendError(e, ex.Message);
             }
 
+        }
+
+        private async Task AlertMeCommand(MessageCreateEventArgs e, ParsedCommand cmd)
+        {
+            AlertMembers.AlertStates newState = _alertMembers.Toggle(e.Message.Author.ID);
+            string onOff = newState == AlertMembers.AlertStates.On ? "ON" : "OFF";
+            await e.Message.Respond($"PM alerts turned {onOff} for {_names.GetName(e.Message.Author)}");
+        }
+
+        private async Task PersonalMessageCommand(MessageCreateEventArgs e, ParsedCommand cmd)
+        {
+            var member = await e.Guild.GetMember(cmd.User.ID);
+            var channel = await member.SendDM();
+            await channel.SendMessage("This is a test PM");
         }
 
         private async Task MessageCommand(MessageCreateEventArgs e, ParsedCommand cmd)

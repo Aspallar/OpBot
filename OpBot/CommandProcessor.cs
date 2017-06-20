@@ -149,6 +149,10 @@ namespace OpBot
                     {
                         await AlertMeCommand(e, cmd);
                     }
+                    else if (cmd.Command == "LISTALERTS")
+                    {
+                        await ListAlertsCommand(e, cmd);
+                    }
                     else
                     {
                         await SendError(e, $"That is not a command that I recognize.");
@@ -160,6 +164,38 @@ namespace OpBot
                 await SendError(e, ex.Message);
             }
 
+        }
+
+        private async Task ListAlertsCommand(MessageCreateEventArgs e, ParsedCommand cmd)
+        {
+            if (!CheckIsAdminUser(e, "LISTALERTS"))
+                return;
+
+            await e.Message.Respond("A list of alert recipients is being prepared. It will be PM'd to you when complete.");
+
+            ulong[] alertRecipients = _alertMembers.GetRecipients();
+            StringBuilder message = new StringBuilder();
+            foreach (ulong userId in alertRecipients)
+            {
+                try
+                {
+                    DiscordMember member = await e.Guild.GetMember(userId);
+                    message.Append(userId);
+                    message.Append(' ');
+                    message.AppendLine(_names.GetName(member.User));
+                }
+                catch (NotFoundException)
+                {
+                    message.AppendLine(userId.ToString());
+                }
+                await Task.Delay(100);
+            }
+            if (message.Length == 0)
+                message.AppendLine("There are no registered alert recipents");
+
+            DiscordMember author = await e.Guild.GetMember(e.Message.Author.ID);
+            DiscordChannel pmChannel = await author.SendDM();
+            await pmChannel.SendMessage(message.ToString());
         }
 
         private async Task AlertMeCommand(MessageCreateEventArgs e, ParsedCommand cmd)

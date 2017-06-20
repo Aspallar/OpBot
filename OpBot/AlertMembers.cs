@@ -44,12 +44,7 @@ namespace OpBot
         public async Task SendAlerts(DiscordGuild guild, IReadOnlyOperation op, string userName)
         {
             bool isAtLeastOneMissingMember = false;
-            ulong[] alertRecipents;
-            lock (this)
-            {
-                alertRecipents = new ulong[_alertMembers.Count];
-                _alertMembers.CopyTo(alertRecipents);
-            }
+            ulong[] alertRecipents = GetRecipients();
             string message = $"A new \"{op.OperationName}\" event has been posted by {userName} in {guild.Name}.";
             foreach (ulong userId in alertRecipents)
             {
@@ -97,5 +92,15 @@ namespace OpBot
             return keys;
         }
 
+        public ulong[] GetRecipients()
+        {
+            ulong[] alertRecipents;
+            lock (this)
+            {
+                alertRecipents = new ulong[_alertMembers.Count];
+                _alertMembers.CopyTo(alertRecipents);
+            }
+            return alertRecipents;
+        }
     }
 }

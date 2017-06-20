@@ -34,6 +34,7 @@ namespace OpBot
             _messageDeleter = new MessageDeleter();
             _defaultOperations = new DefaultOperations();
             _asyncLock = new AsyncLock();
+            _alertMembers = new AlertMembers();
             _ops = config.Ops;
             _ops.OperationDeleted += OperationClosed;
             _ops.OperationUpdated += OperationUpdated;
@@ -144,10 +145,6 @@ namespace OpBot
                     {
                         await PurgeCommand(e);
                     }
-                    else if (cmd.Command == "PM")
-                    {
-                        await PersonalMessageCommand(e, cmd);
-                    }
                     else if (cmd.Command == "ALERTME")
                     {
                         await AlertMeCommand(e, cmd);
@@ -167,16 +164,17 @@ namespace OpBot
 
         private async Task AlertMeCommand(MessageCreateEventArgs e, ParsedCommand cmd)
         {
-            AlertMembers.AlertStates newState = _alertMembers.Toggle(e.Message.Author.ID);
-            string onOff = newState == AlertMembers.AlertStates.On ? "ON" : "OFF";
-            await e.Message.Respond($"PM alerts turned {onOff} for {_names.GetName(e.Message.Author)}");
-        }
+            ulong userId = e.Message.Author.ID;
+            if (!_adminUsers.IsAdmin(userId) && cmd.User.ID != userId)
+            {
+                await SendError(e, "You must be an adminstrator to turn alerts on/off for another user.");
+                return;
+            }
 
-        private async Task PersonalMessageCommand(MessageCreateEventArgs e, ParsedCommand cmd)
-        {
-            var member = await e.Guild.GetMember(cmd.User.ID);
-            var channel = await member.SendDM();
-            await channel.SendMessage("This is a test PM");
+            AlertMembers.AlertStates newState = await _alertMembers.Toggle(cmd.User.ID);
+            string onOff = newState == AlertMembers.AlertStates.On ? "ON" : "OFF";
+            await e.Message.Respond($"PM alerts turned {onOff} for {_names.GetName(e.Message.Author)}.");
+
         }
 
         private async Task MessageCommand(MessageCreateEventArgs e, ParsedCommand cmd)
@@ -654,6 +652,7 @@ namespace OpBot
                 await newOpMessage.Edit(text);
                 await PinMessage(e, newOpMessage);
                 await _repository.SaveAsync(_ops);
+                SendAlerts(e, newOperation);
             }
             catch (OperationException ex)
             {
@@ -663,6 +662,13 @@ namespace OpBot
             {
                 await SendError(e, $"I don't understand part of that create command.\n\n{opEx.Message}\n\nSo meat bag, try again and get it right this time or you will be terminated as an undesirable {DiscordText.StuckOutTongue}.");
             }
+        }
+
+        private void SendAlerts(MessageCreateEventArgs e, Operation newOperation)
+        {
+            string userName = _names.GetName(e.Message.Author);
+            DiscordGuild guild = e.Guild;
+            Task.Run(async () => await _alertMembers.SendAlerts(guild, newOperation, userName));
         }
 
         private async Task RepostCommand(MessageCreateEventArgs e, ParsedCommand cmd)

@@ -19,7 +19,7 @@ namespace OpBot
             StringBuilder bigtext = new StringBuilder();
             do
             {
-                bigtext.Append(_digits[value % 10]);
+                bigtext.Insert(0, _digits[value % 10]);
                 value /= 10;
             } while (value > 0);
             return bigtext.ToString();

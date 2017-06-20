@@ -46,6 +46,7 @@ namespace OpBot
 #else
             const int pollPeriod = 600000;
 #endif
+            await TryStuff();
             while (true)
             {
                 if (_cancel.IsCancellationRequested)
@@ -53,6 +54,12 @@ namespace OpBot
                 await ProcessPosts();
                 await Task.Delay(pollPeriod, _cancel);
             }
+        }
+
+        private async Task TryStuff()
+        {
+            var messages = await _channel.GetMessages(limit: 100);
+
         }
 
         private async Task ProcessPosts()

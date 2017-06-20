@@ -10,6 +10,7 @@ namespace OpBot
     {
         int Id { get; }
         ulong MessageId { get; }
+        string OperationName { get; }
         string GetOperationMessageText();
     }
 }

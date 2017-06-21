@@ -22,9 +22,11 @@ namespace OpBot
         private SwtorAvailablePoll _swtorAvailablePoll;
         private AsyncLock _asyncLock;
         private AlertMembers _alertMembers;
+        private string _commandCharacters;
 
         public CommandProcessor(CommandProcessorConfig config)
         {
+            _commandCharacters = config.CommandCharacters;
             _opBotUserId = config.OpBotUserId;
             _names = config.Names;
             _repository = config.Repository;
@@ -43,21 +45,16 @@ namespace OpBot
 
         public bool IsCommand(MessageCreateEventArgs e)
         {
-            return e.Message.Mentions.Count > 0
-                && e.Message.Mentions.Any(m => m.ID == _opBotUserId);
+            return e.Message.Content.Length > 0 &&
+                (_commandCharacters.IndexOf(e.Message.Content[0]) >= 0
+                || e.Message.Mentions.Any(x => x.ID == _opBotUserId));
         }
 
         public async Task Execute(MessageCreateEventArgs e)
         {
-            if (e.Message.Mentions.Count > 2)
-            {
-                await SendError(e, "There were too many mentions in that command.\n");
-                return;
-            }
-
             try
             {
-                ParsedCommand cmd = new ParsedCommand(e, _defaultOperations[e.Message.Author.ID], _opBotUserId);
+                ParsedCommand cmd = new ParsedCommand(e, _defaultOperations[e.Message.Author.ID], _opBotUserId, _commandCharacters);
 
                 if (cmd.CommandParts.Length == 0)
                 {

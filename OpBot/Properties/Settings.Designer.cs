@@ -70,9 +70,9 @@ namespace OpBot.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("<?xml version=\"1.0\" encoding=\"utf-16\"?>\r\n<ArrayOfString xmlns:xsi=\"http://www.w3." +
-            "org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">\r\n  <s" +
-            "tring>0</string>\r\n</ArrayOfString>")]
+        [global::System.Configuration.DefaultSettingValueAttribute("<?xml version=\"1.0\" encoding=\"utf-16\"?>\n<ArrayOfString xmlns:xsi=\"http://www.w3.o" +
+            "rg/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\">\n  <str" +
+            "ing>0</string>\n</ArrayOfString>")]
         public global::System.Collections.Specialized.StringCollection AdminUsers {
             get {
                 return ((global::System.Collections.Specialized.StringCollection)(this["AdminUsers"]));
@@ -85,6 +85,15 @@ namespace OpBot.Properties {
         public ulong devTrackerChannel {
             get {
                 return ((ulong)(this["devTrackerChannel"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("~!?")]
+        public string CommandChars {
+            get {
+                return ((string)(this["CommandChars"]));
             }
         }
     }

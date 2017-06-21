@@ -55,6 +55,7 @@ namespace OpBot
                 AdminUsers = admins,
                 Client = _client,
                 Ops = _ops,
+                CommandCharacters = Properties.Settings.Default.CommandChars,
             });
 
             _client.MessageCreated += Client_MessageCreated;

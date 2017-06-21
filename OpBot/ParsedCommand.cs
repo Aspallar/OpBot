@@ -16,7 +16,7 @@ namespace OpBot
 
         private static readonly Regex _mentionsRegex = new Regex(@"\<@!?\d+\>");
 
-        public ParsedCommand(MessageCreateEventArgs e, int defaultOperationId, ulong opBotUserId)
+        public ParsedCommand(MessageCreateEventArgs e, int defaultOperationId, ulong opBotUserId, string commandCharacters)
         {
             if (e.Message.Mentions.Count > 2)
                 throw new CommandParseException("There are to many mentions in that command");
@@ -26,7 +26,8 @@ namespace OpBot
             var mentionedUser = e.Message.Mentions.Where(m => m.ID != opBotUserId).SingleOrDefault();
             User = mentionedUser ?? e.Message.Author;
 
-            string contentWithNoMentions = _mentionsRegex.Replace(e.Message.Content, string.Empty);
+            string content = StripCommandCharacters(e.Message.Content, commandCharacters); 
+            string contentWithNoMentions = _mentionsRegex.Replace(content, string.Empty);
             string[] parts = contentWithNoMentions.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             List<string> commandParts = new List<string>();
 
@@ -48,6 +49,19 @@ namespace OpBot
             }
 
             CommandParts = commandParts.ToArray();
+        }
+
+        private string StripCommandCharacters(string messageContent, string commandCharacters)
+        {
+            System.Diagnostics.Debug.Assert(messageContent.Length > 0);
+            if (commandCharacters.IndexOf(messageContent[0]) >= 0)
+            {
+                return messageContent.Substring(1);
+            }
+            else
+            {
+                return messageContent;
+            }
         }
 
         private void ParseSwitch(string part)

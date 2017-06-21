@@ -6,6 +6,7 @@ namespace OpBot
     {
         public IAdminUser AdminUsers { get; set; }
         public DiscordClient Client { get; set; }
+        public string CommandCharacters { get; internal set; }
         public NicknameList Names { get; set; }
         public ulong OpBotChannelId { get; set; }
         public ulong OpBotUserId { get;  set; }

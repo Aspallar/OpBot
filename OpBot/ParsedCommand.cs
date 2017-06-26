@@ -51,7 +51,7 @@ namespace OpBot
             CommandParts = commandParts.ToArray();
         }
 
-        private string StripCommandCharacters(string messageContent, string commandCharacters)
+        private static string StripCommandCharacters(string messageContent, string commandCharacters)
         {
             System.Diagnostics.Debug.Assert(messageContent.Length > 0);
             if (commandCharacters.IndexOf(messageContent[0]) >= 0)

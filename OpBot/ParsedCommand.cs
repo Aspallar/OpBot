@@ -83,7 +83,7 @@ namespace OpBot
             int operationId;
             if (int.TryParse(part.Substring(1), out operationId))
             {
-                if (operationId > 1)
+                if (operationId > 0)
                 {
                     OperationId = operationId;
                     return;

@@ -235,11 +235,15 @@ namespace OpBot
 
             sb.Append("  *");
             sb.Append(baseTime.AddHours(1).ToShortTimeString());
-            sb.AppendLine(" Central Europe (Belgium)*");
+            sb.AppendLine(" Central Europe (Germany)*");
 
             sb.Append("  *");
             sb.Append(baseTime.AddHours(2).ToShortTimeString());
             sb.AppendLine(" Eastern Europe (Estonia)*");
+
+            sb.Append("  *");
+            sb.Append(_date.AddHours(3).ToShortTimeString());
+            sb.AppendLine(" Moscow Standard Time*");
 
             sb.Append(DiscordText.CodeBlock);
             sb.AppendLine("Tanks:");

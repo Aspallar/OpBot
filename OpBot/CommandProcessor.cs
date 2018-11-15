@@ -5,6 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using DSharpPlus;
 using NeoSmart.AsyncLock;
+using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
+using DSharpPlus.Exceptions;
 
 namespace OpBot
 {
@@ -47,14 +50,14 @@ namespace OpBot
         {
             return e.Message.Content.Length > 0 &&
                 (_commandCharacters.IndexOf(e.Message.Content[0]) >= 0
-                || e.Message.Mentions.Any(x => x.ID == _opBotUserId));
+                || e.Message.MentionedUsers.Any(x => x.Id == _opBotUserId));
         }
 
         public async Task Execute(MessageCreateEventArgs e)
         {
             try
             {
-                ParsedCommand cmd = new ParsedCommand(e, _defaultOperations[e.Message.Author.ID], _opBotUserId, _commandCharacters);
+                ParsedCommand cmd = new ParsedCommand(e, _defaultOperations[e.Message.Author.Id], _opBotUserId, _commandCharacters);
 
                 if (cmd.CommandParts.Length == 0)
                 {
@@ -168,7 +171,7 @@ namespace OpBot
             if (!CheckIsAdminUser(e, "LISTALERTS"))
                 return;
 
-            await e.Message.Respond("A list of alert recipients is being prepared. It will be PM'd to you when complete.");
+            await e.Message.RespondAsync("A list of alert recipients is being prepared. It will be PM'd to you when complete.");
 
             ulong[] alertRecipients = _alertMembers.GetRecipients();
             StringBuilder message = new StringBuilder();
@@ -176,10 +179,10 @@ namespace OpBot
             {
                 try
                 {
-                    DiscordMember member = await e.Guild.GetMember(userId);
+                    DiscordMember member = await e.Guild.GetMemberAsync(userId);
                     message.Append(userId);
                     message.Append(' ');
-                    message.AppendLine(_names.GetName(member.User));
+                    message.AppendLine(_names.GetName(member));
                 }
                 catch (NotFoundException)
                 {
@@ -190,23 +193,22 @@ namespace OpBot
             if (message.Length == 0)
                 message.AppendLine("There are no registered alert recipents");
 
-            DiscordMember author = await e.Guild.GetMember(e.Message.Author.ID);
-            DiscordChannel pmChannel = await author.SendDM();
-            await pmChannel.SendMessage(message.ToString());
+            DiscordMember author = await e.Guild.GetMemberAsync(e.Message.Author.Id);
+            await author.SendMessageAsync(message.ToString());
         }
 
         private async Task AlertMeCommand(MessageCreateEventArgs e, ParsedCommand cmd)
         {
-            ulong userId = e.Message.Author.ID;
-            if (!_adminUsers.IsAdmin(userId) && cmd.User.ID != userId)
+            ulong userId = e.Message.Author.Id;
+            if (!_adminUsers.IsAdmin(userId) && cmd.User.Id != userId)
             {
                 await SendError(e, "You must be an adminstrator to turn alerts on/off for another user.");
                 return;
             }
 
-            AlertMembers.AlertStates newState = await _alertMembers.Toggle(cmd.User.ID);
+            AlertMembers.AlertStates newState = await _alertMembers.Toggle(cmd.User.Id);
             string onOff = newState == AlertMembers.AlertStates.On ? "ON" : "OFF";
-            await e.Message.Respond($"PM alerts turned {onOff} for {_names.GetName(e.Message.Author)}.");
+            await e.Message.RespondAsync($"PM alerts turned {onOff} for {_names.GetName(e.Message.Author)}.");
 
         }
 
@@ -215,9 +217,9 @@ namespace OpBot
             if (!CheckIsAdminUser(e, "MESSAGE") || cmd.CommandParts.Length == 1)
                 return;
             await Task.Delay(100);
-            await e.Message.Delete();
+            await e.Message.DeleteAsync();
             await Task.Delay(100);
-            await e.Channel.SendMessage(string.Join(" ", cmd.CommandParts, 1, cmd.CommandParts.Length - 1));
+            await e.Channel.SendMessageAsync(string.Join(" ", cmd.CommandParts, 1, cmd.CommandParts.Length - 1));
         }
 
         private async Task MonitorCommand(MessageCreateEventArgs e, ParsedCommand cmd)
@@ -252,7 +254,7 @@ namespace OpBot
             if (alreadyStarted)
                 await SendError(e, "I am already monitoring twitter");
             else
-                await e.Message.Respond($"{DiscordText.OkHand} Monitoring twitter for 'servers are available' tweet....");
+                await e.Message.RespondAsync($"{DiscordText.OkHand} Monitoring twitter for 'servers are available' tweet....");
         }
 
         private async Task StopTwittorPoll(MessageCreateEventArgs e)
@@ -267,7 +269,7 @@ namespace OpBot
             if (alreadyStopped)
                 await SendError(e, "I am not montoring twitter!\nI cannot stop doing something I'm not doing! Stupid meat-bag.");
             else
-                await e.Message.Respond($"{DiscordText.OkHand} Stopped.");
+                await e.Message.RespondAsync($"{DiscordText.OkHand} Stopped.");
         }
 
         private async Task EndTwitterPoll()
@@ -287,7 +289,7 @@ namespace OpBot
             if (e.Expired)
                 await SendError(e.Channel, "I have stopped monitoring twitter because it has taken too long for the tweet to happen.");
             else
-                await e.Channel.SendMessage($"{DiscordText.BigText("servers\navailable")}\nAccording to twitter it looks like the servers might be back up and running. Can't say for sure though, you meat-bags can be very imprecise in your tweets.");
+                await e.Channel.SendMessageAsync($"{DiscordText.BigText("servers\navailable")}\nAccording to twitter it looks like the servers might be back up and running. Can't say for sure though, you meat-bags can be very imprecise in your tweets.");
         }
 
         private async Task SetOperationCommand(MessageCreateEventArgs e, ParsedCommand cmd)
@@ -315,7 +317,7 @@ namespace OpBot
                 return;
             }
 
-            _defaultOperations[e.Message.Author.ID] = operationId;
+            _defaultOperations[e.Message.Author.Id] = operationId;
         }
 
         private async Task ListCommand(MessageCreateEventArgs e)
@@ -323,7 +325,7 @@ namespace OpBot
             string text = _ops.GetSummary();
             if (string.IsNullOrEmpty(text))
                 text = "There are no active operations to list.";
-            await e.Message.Respond(text);
+            await e.Message.RespondAsync(text);
         }
 
         private async Task OperationClosed(OperationDeletedEventArgs e)
@@ -332,10 +334,10 @@ namespace OpBot
             await _repository.SaveAsync(_ops);
             try
             {
-                channel = await _client.GetChannel(_opBotChannelId);
-                DiscordMessage message = await channel.GetMessage(e.MessageId);
-                await message.Edit($"{DiscordText.NoEntry} {DiscordText.BigText("closed")}  {message.Content}");
-                await message.Unpin();
+                channel = await _client.GetChannelAsync(_opBotChannelId);
+                DiscordMessage message = await channel.GetMessageAsync(e.MessageId);
+                await message.ModifyAsync($"{DiscordText.NoEntry} {DiscordText.BigText("closed")}  {message.Content}");
+                await message.UnpinAsync();
             }
             catch (NotFoundException)
             {
@@ -343,7 +345,7 @@ namespace OpBot
             }
             catch (UnauthorizedException)
             {
-                await channel.SendMessage("Unable to perform unpin. I need the 'Manage Messages' permission to do so.");
+                await channel.SendMessageAsync("Unable to perform unpin. I need the 'Manage Messages' permission to do so.");
             }
         }
 
@@ -353,9 +355,9 @@ namespace OpBot
             await _repository.SaveAsync(_ops);
             try
             {
-                channel = await _client.GetChannel(_opBotChannelId);
-                DiscordMessage message = await channel.GetMessage(e.Operation.MessageId);
-                await message.Edit(e.Operation.GetOperationMessageText());
+                channel = await _client.GetChannelAsync(_opBotChannelId);
+                DiscordMessage message = await channel.GetMessageAsync(e.Operation.MessageId);
+                await message.ModifyAsync(e.Operation.GetOperationMessageText());
             }
             catch (NotFoundException)
             {
@@ -368,7 +370,7 @@ namespace OpBot
         private async Task VersionCommand(MessageCreateEventArgs e)
         {
             string text = "Version: " + DiscordText.BigText(OpBotUtils.GetVersionText());
-            await e.Channel.SendMessage(text);
+            await e.Channel.SendMessageAsync(text);
         }
 
         private async Task BackCommand(MessageCreateEventArgs e, string[] commandParts)
@@ -376,7 +378,7 @@ namespace OpBot
             if (!CheckIsAdminUser(e, "BACK"))
                 return;
 
-            await e.Channel.SendMessage($"{DiscordText.BigText("I  AM  BACK")}\n\nI am back online and awaiting your commands.");
+            await e.Channel.SendMessageAsync($"{DiscordText.BigText("I  AM  BACK")}\n\nI am back online and awaiting your commands.");
         }
 
         private async Task OfflineCommand(MessageCreateEventArgs e, string[] commandParts)
@@ -417,7 +419,7 @@ namespace OpBot
                     text += duration.Minutes.ToString() + " minutes ";
             }
             string fullText = $"{DiscordText.BigText("offline")}\n\nI am going offline for a while.\n\n{text}\n\nLove you all {DiscordText.Kiss}";
-            await e.Channel.SendMessage(fullText);
+            await e.Channel.SendMessageAsync(fullText);
         }
 
         private async Task BigTextCommand(MessageCreateEventArgs e, ParsedCommand cmd)
@@ -429,7 +431,7 @@ namespace OpBot
 
             for (int k = 1; k < cmd.CommandParts.Length; k++)
             {
-                DiscordMessage message = await e.Channel.SendMessage(DiscordText.BigText(cmd.CommandParts[k]));
+                DiscordMessage message = await e.Channel.SendMessageAsync(DiscordText.BigText(cmd.CommandParts[k]));
                 if (!cmd.IsPermanent)
                     _messageDeleter.AddMessage(message, 30000);
             }
@@ -457,14 +459,14 @@ namespace OpBot
             if (!success)
                 await SendOperationErrorMessage(e, operationId);
             else
-                await e.Channel.SendMessage($"Operation {DiscordText.BigText(operationId)} closed {DiscordText.OkHand}.");
+                await e.Channel.SendMessageAsync($"Operation {DiscordText.BigText(operationId)} closed {DiscordText.OkHand}.");
         }
 
         private async Task AltCommand(MessageCreateEventArgs e, ParsedCommand cmd)
         {
             try
             {
-                bool success = await _ops.SetOperationRoles(cmd.OperationId, _names.GetName(cmd.User), cmd.User.ID, cmd.CommandParts);
+                bool success = await _ops.SetOperationRoles(cmd.OperationId, _names.GetName(cmd.User), cmd.User.Id, cmd.CommandParts);
                 if (!success)
                     await SendOperationErrorMessage(e, cmd.OperationId);
             }
@@ -497,7 +499,7 @@ namespace OpBot
             messageText.AppendLine(DiscordText.CodeBlock);
             messageText.Append(GetSelfDestructText(messageLifetime));
             Console.WriteLine($"Message length: {messageText.Length}");
-            DiscordMessage message = await e.Channel.SendMessage(messageText.ToString());
+            DiscordMessage message = await e.Channel.SendMessageAsync(messageText.ToString());
             _messageDeleter.AddMessage(message, messageLifetime);
             await SafeDeleteMessage(e);
         }
@@ -585,7 +587,7 @@ namespace OpBot
             }
             msg.AppendLine(DiscordText.CodeBlock);
             msg.Append(GetSelfDestructText(messageLifetime));
-            DiscordMessage message = await e.Channel.SendMessage(msg.ToString());
+            DiscordMessage message = await e.Channel.SendMessageAsync(msg.ToString());
             _messageDeleter.AddMessage(message, messageLifetime);
             await SafeDeleteMessage(e);
         }
@@ -595,14 +597,14 @@ namespace OpBot
             if (!CheckIsAdminUser(e, "PURGE"))
                 return;
 
-            var messages = await e.Channel.GetMessages();
+            var messages = await e.Channel.GetMessagesAsync();
             foreach (var message in messages)
             {
-                if (!_ops.IsOperationMessage(message.ID))
+                if (!_ops.IsOperationMessage(message.Id))
                 {
                     try
                     {
-                        await message.Delete();
+                        await message.DeleteAsync();
                     }
                     catch (NotFoundException)
                     {
@@ -620,7 +622,7 @@ namespace OpBot
 
         private bool CheckIsAdminUser(MessageCreateEventArgs e, string commandName)
         {
-            if (!_adminUsers.IsAdmin(e.Message.Author.ID))
+            if (!_adminUsers.IsAdmin(e.Message.Author.Id))
             {
                 Task.Run(async () => {
                     await SendError(e, $"You are not an administrator.\n\nYou need to be an administrator to use the *{commandName}* command.");
@@ -632,7 +634,7 @@ namespace OpBot
 
         private async Task RemoveCommand(MessageCreateEventArgs e, ParsedCommand cmd)
         {
-            bool success = await _ops.RemoveSignup(cmd.OperationId, cmd.User.ID);
+            bool success = await _ops.RemoveSignup(cmd.OperationId, cmd.User.Id);
             if (!success)
                 await SendOperationErrorMessage(e, cmd.OperationId);
         }
@@ -652,7 +654,7 @@ namespace OpBot
         {
             string role = cmd.Command.StartsWith("HEAL") ? cmd.Command.Substring(0, 4) : cmd.Command;
 
-            bool success = await _ops.Signup(cmd.OperationId, cmd.User.ID, _names.GetName(cmd.User), role);
+            bool success = await _ops.Signup(cmd.OperationId, cmd.User.Id, _names.GetName(cmd.User), role);
 
             if (!success)
                 await SendOperationErrorMessage(e, cmd.OperationId);
@@ -678,11 +680,11 @@ namespace OpBot
                 };
                 newOperation.OperationName = opParams.OperationCode == "GF" ? GroupFinder.OperationOn(newOperation.Date) : opParams.OperationCode;
 
-                DiscordMessage newOpMessage = await e.Channel.SendMessage("Creating event...");
-                newOperation.MessageId = newOpMessage.ID;
+                DiscordMessage newOpMessage = await e.Channel.SendMessageAsync("Creating event...");
+                newOperation.MessageId = newOpMessage.Id;
 
                 string text = _ops.Add(newOperation).GetOperationMessageText();
-                await newOpMessage.Edit(text);
+                await newOpMessage.ModifyAsync(text);
                 await PinMessage(e, newOpMessage);
                 await _repository.SaveAsync(_ops);
                 SendAlerts(e, newOperation);
@@ -710,10 +712,10 @@ namespace OpBot
             for (int k = 0; k < ops.Length; k++)
             {
                 IReadOnlyOperation op = ops[k];
-                DiscordMessage newMessage = await e.Channel.SendMessage(op.GetOperationMessageText());
-                ulong oldMessageId = _ops.UpdateMessageId(op.Id, newMessage.ID);
-                DiscordMessage oldMessage = await e.Channel.GetMessage(oldMessageId);
-                try { await oldMessage.Delete(); } catch (NotFoundException) { }
+                DiscordMessage newMessage = await e.Channel.SendMessageAsync(op.GetOperationMessageText());
+                ulong oldMessageId = _ops.UpdateMessageId(op.Id, newMessage.Id);
+                DiscordMessage oldMessage = await e.Channel.GetMessageAsync(oldMessageId);
+                try { await oldMessage.DeleteAsync(); } catch (NotFoundException) { }
                 await Task.Delay(250);
                 await PinMessage(e, newMessage);
                 if (k != ops.Length - 1)
@@ -726,7 +728,7 @@ namespace OpBot
         {
             try
             {
-                await message.Pin();
+                await message.PinAsync();
             }
             catch (UnauthorizedException)
             {
@@ -751,7 +753,7 @@ namespace OpBot
         {
             try
             {
-                await e.Message.Delete();
+                await e.Message.DeleteAsync();
             }
             catch (NotFoundException)
             {
@@ -765,8 +767,15 @@ namespace OpBot
 
         private async Task SendError(DiscordChannel channel, string errorText)
         {
-            ErrorEmbed errorEmbed = new ErrorEmbed(errorText);
-            await channel.SendMessage("", embed: errorEmbed);
+            DiscordEmbedBuilder errorEmbed = new DiscordEmbedBuilder()
+            {
+                Color = new DiscordColor("ad1313"),
+                Title = "Error",
+                Url = Constants.InstrucionUrl,
+                ThumbnailUrl = "https://raw.githubusercontent.com/wiki/Aspallar/OpBot/images/2-128.png",
+                Description = errorText
+            };
+            await channel.SendMessageAsync("", embed: errorEmbed.Build());
         }
 
         private async Task SendError(MessageCreateEventArgs e, string errorText)
@@ -778,18 +787,17 @@ namespace OpBot
 
         private async Task ShowInstructions(MessageCreateEventArgs e)
         {
-            DiscordEmbed instructionEmbed = new DiscordEmbed()
+            await Task.CompletedTask;
+
+            DiscordEmbedBuilder instructionEmbed = new DiscordEmbedBuilder()
             {
-                Color = 0xad1313,
+                Color = new DiscordColor("ad1313"),
                 Title = "List of Commands",
                 Url = Constants.InstrucionUrl,
-                Thumbnail = new DiscordEmbedThumbnail()
-                {
-                    Url = "https://raw.githubusercontent.com/wiki/Aspallar/OpBot/images/2-128.png",
-                },
+                ThumbnailUrl = "https://raw.githubusercontent.com/wiki/Aspallar/OpBot/images/2-128.png",
                 Description = $"Hey {_names.GetName(e.Message.Author)}.\n\nI manage operations and other events here.\n\n You can view a full list of my commands by clicking on the title above."
             };
-            await e.Message.Respond("", embed: instructionEmbed);
+            await e.Message.RespondAsync("", embed: instructionEmbed.Build());
         }
 
 

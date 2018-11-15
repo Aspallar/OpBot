@@ -1,4 +1,6 @@
 ﻿using DSharpPlus;
+using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,12 +20,12 @@ namespace OpBot
 
         public ParsedCommand(MessageCreateEventArgs e, int defaultOperationId, ulong opBotUserId, string commandCharacters)
         {
-            if (e.Message.Mentions.Count > 2)
+            if (e.Message.MentionedUsers.Count > 2)
                 throw new CommandParseException("There are to many mentions in that command");
 
             OperationId = defaultOperationId;
 
-            var mentionedUser = e.Message.Mentions.Where(m => m.ID != opBotUserId).SingleOrDefault();
+            var mentionedUser = e.Message.MentionedUsers.Where(m => m.Id != opBotUserId).SingleOrDefault();
             User = mentionedUser ?? e.Message.Author;
 
             string content = StripCommandCharacters(e.Message.Content, commandCharacters); 

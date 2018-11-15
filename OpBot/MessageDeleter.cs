@@ -1,4 +1,6 @@
 ﻿using DSharpPlus;
+using DSharpPlus.Entities;
+using DSharpPlus.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -56,7 +58,7 @@ namespace OpBot
                 {
                     try
                     {
-                        await message.Delete();
+                        await message.DeleteAsync();
                     }
                     catch (NotFoundException)
                     {

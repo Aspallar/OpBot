@@ -1,4 +1,6 @@
 ﻿using DSharpPlus;
+using DSharpPlus.Entities;
+using DSharpPlus.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -51,9 +53,8 @@ namespace OpBot
                 DiscordMember member;
                 try
                 {
-                    member = await guild.GetMember(userId);
-                    DiscordChannel channel = await member.SendDM();
-                    await channel.SendMessage(message);
+                    member = await guild.GetMemberAsync(userId);
+                    await member.SendMessageAsync(message);
                 }
                 catch (NotFoundException)
                 {

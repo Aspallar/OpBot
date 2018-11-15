@@ -8,6 +8,7 @@ using System.IO;
 using AngleSharp.Dom.Html;
 using System.Threading;
 using AngleSharp.Dom;
+using DSharpPlus.Entities;
 
 namespace OpBot
 {
@@ -46,7 +47,6 @@ namespace OpBot
 #else
             const int pollPeriod = 600000;
 #endif
-            await TryStuff();
             while (true)
             {
                 if (_cancel.IsCancellationRequested)
@@ -54,12 +54,6 @@ namespace OpBot
                 await ProcessPosts();
                 await Task.Delay(pollPeriod, _cancel);
             }
-        }
-
-        private async Task TryStuff()
-        {
-            var messages = await _channel.GetMessages(limit: 100);
-
         }
 
         private async Task ProcessPosts()
@@ -89,14 +83,14 @@ namespace OpBot
 
                 isAtLeastOneNewPost = true;
 
-                DiscordEmbed embed = new DiscordEmbed()
+                DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
                 {
                     Title = dates[0].TextContent.TrimStart().TrimEnd(_unwantedTitleEndings),
                     Url = swtorUrlBase + relativeUrl,
                     Description = dates[1].TextContent.TrimEnd(),
                 };
 
-                await _channel.SendMessage("", embed: embed);
+                await _channel.SendMessageAsync("", embed: embed.Build());
 
                 if (k != 0)
                     await Task.Delay(2000);

@@ -2,6 +2,7 @@
 using DSharpPlus;
 using System.Threading.Tasks;
 using System.Threading;
+using DSharpPlus.Entities;
 
 namespace OpBot
 {

@@ -1,4 +1,8 @@
 ﻿using DSharpPlus;
+using DSharpPlus.Entities;
+using DSharpPlus.EventArgs;
+using DSharpPlus.Exceptions;
+using DSharpPlus.Net.WebSocket;
 using System;
 using System.Threading.Tasks;
 
@@ -36,15 +40,17 @@ namespace OpBot
             if (Properties.Settings.Default.devTrackerChannel != 0)
                 _devTracker = new DevTracker();
 
-            _client = new DiscordClient(new DiscordConfig()
+            _client = new DiscordClient(new DiscordConfiguration()
             {
                 Token = Properties.Settings.Default.OpBotToken,
                 TokenType = TokenType.Bot,
-                DiscordBranch = Branch.Stable,
+                //DiscordBranch = Branch.Stable,
                 LogLevel = LogLevel.Debug,
                 UseInternalLogHandler = true,
                 AutoReconnect = true,
             });
+            _client.SetWebSocketClient<WebSocket4NetClient>();
+
 
             _commandProcessor = new CommandProcessor(new CommandProcessorConfig()
             {
@@ -60,13 +66,15 @@ namespace OpBot
 
             _client.MessageCreated += Client_MessageCreated;
             _client.GuildAvailable += Client_GuildAvailable;
-            _client.GuildMemberAdd += Client_GuildMemberAdd;
-            _client.GuildMemberUpdate += Client_GuildMemberUpdate;
+
+            _client.GuildMemberAdded += Client_GuildMemberAdded;
+            _client.GuildMemberUpdated += Client_GuildMemberUpdated;
             _client.Ready += Client_Ready;
+
 
             try
             {
-                await _client.Connect();
+                await _client.ConnectAsync();
             }
             catch (UnauthorizedException)
             {
@@ -81,13 +89,13 @@ namespace OpBot
                 try { await _devTracker.Stop(); } catch (TaskCanceledException) { }
                 _devTracker.Dispose();
             }
-            await _client.Disconnect();
+            await _client.DisconnectAsync();
             _client.Dispose();
         }
 
-        private async Task Client_Ready()
+        private async Task Client_Ready(ReadyEventArgs e)
         {
-            await _client.UpdateStatus("Star Wars: The Old Republic");
+            await _client.UpdateStatusAsync(new DiscordGame("Star Wars: The Old Republic"));
         }
 
         private async Task Client_MessageCreated(MessageCreateEventArgs e)
@@ -95,7 +103,7 @@ namespace OpBot
             if (e.Message.Author.IsBot)
                 return;
 
-            if (e.Channel.ID != Properties.Settings.Default.OpBotChannel)
+            if (e.Channel.Id != Properties.Settings.Default.OpBotChannel)
                 return;
 
             if (_commandProcessor.IsCommand(e))
@@ -103,11 +111,16 @@ namespace OpBot
         }
 
 
-        private async Task Client_GuildMemberAdd(GuildMemberAddEventArgs e)
+        private async Task Client_GuildMemberAdded(GuildMemberAddEventArgs e)
         {
+            // TODO: implement Client_GuildMemberAdded
+            //_names.Add(e.Member);
+            //ulong greetingsChannelId = Properties.Settings.Default.GreetingsChannelId;
+            //await Greeting.Greet(greetingsChannelId, _client, _names.GetName(e.Member.User), _guildName);
+
             _names.Add(e.Member);
             ulong greetingsChannelId = Properties.Settings.Default.GreetingsChannelId;
-            await Greeting.Greet(greetingsChannelId, _client, _names.GetName(e.Member.User), _guildName);
+            await Greeting.Greet(greetingsChannelId, _client, _names.GetName(e.Member), _guildName);
         }
 
         private async Task Client_GuildAvailable(GuildCreateEventArgs e)
@@ -126,7 +139,7 @@ namespace OpBot
             ulong devTrackerChannelId = Properties.Settings.Default.devTrackerChannel;
             try
             {
-                _devTracker.Start(await _client.GetChannelByID(devTrackerChannelId));
+                _devTracker.Start(await _client.GetChannelAsync(devTrackerChannelId));
             }
             catch (NotFoundException)
             {
@@ -136,9 +149,9 @@ namespace OpBot
             }
         }
 
-        private Task Client_GuildMemberUpdate(GuildMemberUpdateEventArgs e)
+        private Task Client_GuildMemberUpdated(GuildMemberUpdateEventArgs e)
         {
-            _names.Update(e.User.ID, e.NickName);
+            _names.Update(e.Member.Id, e.Member.Nickname);
             return Task.Delay(0);
         }
 

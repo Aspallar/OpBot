@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using DSharpPlus;
+using DSharpPlus.Entities;
 
 namespace OpBot
 {
@@ -13,14 +14,23 @@ namespace OpBot
 
         public string GetName(DiscordUser user)
         {
-            NicknameEntry nickname = FindById(user.ID);
+            NicknameEntry nickname = FindById(user.Id);
             if (nickname == null)
                 return user.Username;
             else
                 return nickname.Nickname;
         }
 
-        public void Add(List<DiscordMember> members)
+        public string GetName(DiscordMember member)
+        {
+            NicknameEntry nickname = FindById(member.Id);
+            if (nickname == null)
+                return member.Username;
+            else
+                return nickname.Nickname;
+        }
+
+        public void Add(IReadOnlyList<DiscordMember> members)
         {
             foreach (var member in members)
                 Add(member);
@@ -29,7 +39,7 @@ namespace OpBot
         public void Add(DiscordMember member)
         {
             if (!string.IsNullOrEmpty(member.Nickname))
-                AddNew(member.User.ID, member.Nickname);
+                AddNew(member.Id, member.Nickname);
         }
 
         public void Update(ulong userId, string nickName)

@@ -1,4 +1,5 @@
-﻿using DSharpPlus;
+﻿using System.Threading;
+using DSharpPlus;
 
 namespace OpBot
 {
@@ -12,5 +13,6 @@ namespace OpBot
         public ulong OpBotUserId { get;  set; }
         public OperationManager Ops { get; set; }
         public OperationRepository Repository { get; set; }
+        public CancellationTokenSource StopApplication { get; internal set; }
     }
 }

@@ -8,6 +8,7 @@ using NeoSmart.AsyncLock;
 using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Exceptions;
+using System.Threading;
 
 namespace OpBot
 {
@@ -25,7 +26,8 @@ namespace OpBot
         private SwtorAvailablePoll _swtorAvailablePoll;
         private AsyncLock _asyncLock;
         private AlertMembers _alertMembers;
-        private string _commandCharacters;
+        private readonly string _commandCharacters;
+        private readonly CancellationTokenSource _stopApplication;
 
         public CommandProcessor(CommandProcessorConfig config)
         {
@@ -41,6 +43,7 @@ namespace OpBot
             _asyncLock = new AsyncLock();
             _alertMembers = new AlertMembers();
             _ops = config.Ops;
+            _stopApplication = config.StopApplication;
             _ops.OperationDeleted += OperationClosed;
             _ops.OperationUpdated += OperationUpdated;
         }
@@ -420,6 +423,7 @@ namespace OpBot
             }
             string fullText = $"{DiscordText.BigText("offline")}\n\nI am going offline for a while.\n\n{text}\n\nLove you all {DiscordText.Kiss}";
             await e.Channel.SendMessageAsync(fullText);
+            _stopApplication.Cancel();
         }
 
         private async Task BigTextCommand(MessageCreateEventArgs e, ParsedCommand cmd)

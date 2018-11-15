@@ -4,6 +4,7 @@ using DSharpPlus.EventArgs;
 using DSharpPlus.Exceptions;
 using DSharpPlus.Net.WebSocket;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace OpBot
@@ -18,6 +19,7 @@ namespace OpBot
         private string _guildName = string.Empty;
         private OperationManager _ops;
         private DevTracker _devTracker;
+        private CancellationTokenSource _stopApplication;
 
         public async Task Run(string[] args)
         {
@@ -44,13 +46,13 @@ namespace OpBot
             {
                 Token = Properties.Settings.Default.OpBotToken,
                 TokenType = TokenType.Bot,
-                //DiscordBranch = Branch.Stable,
                 LogLevel = LogLevel.Debug,
                 UseInternalLogHandler = true,
                 AutoReconnect = true,
             });
             _client.SetWebSocketClient<WebSocket4NetClient>();
 
+            _stopApplication = new CancellationTokenSource();
 
             _commandProcessor = new CommandProcessor(new CommandProcessorConfig()
             {
@@ -62,6 +64,7 @@ namespace OpBot
                 Client = _client,
                 Ops = _ops,
                 CommandCharacters = Properties.Settings.Default.CommandChars,
+                StopApplication = _stopApplication,
             });
 
             _client.MessageCreated += Client_MessageCreated;
@@ -70,7 +73,6 @@ namespace OpBot
             _client.GuildMemberAdded += Client_GuildMemberAdded;
             _client.GuildMemberUpdated += Client_GuildMemberUpdated;
             _client.Ready += Client_Ready;
-
 
             try
             {
@@ -82,7 +84,8 @@ namespace OpBot
                 return;
             }
 
-            Console.ReadKey();
+            Console.CancelKeyPress += Console_CancelKeyPress;
+            try { await Task.Delay(-1, _stopApplication.Token); } catch (TaskCanceledException) { }
 
             if (_devTracker != null)
             {
@@ -91,6 +94,15 @@ namespace OpBot
             }
             await _client.DisconnectAsync();
             _client.Dispose();
+        }
+
+        private void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)
+        {
+            if (e.SpecialKey == ConsoleSpecialKey.ControlC)
+            {
+                e.Cancel = true;
+                _stopApplication.Cancel();
+            }
         }
 
         private async Task Client_Ready(ReadyEventArgs e)
@@ -113,11 +125,6 @@ namespace OpBot
 
         private async Task Client_GuildMemberAdded(GuildMemberAddEventArgs e)
         {
-            // TODO: implement Client_GuildMemberAdded
-            //_names.Add(e.Member);
-            //ulong greetingsChannelId = Properties.Settings.Default.GreetingsChannelId;
-            //await Greeting.Greet(greetingsChannelId, _client, _names.GetName(e.Member.User), _guildName);
-
             _names.Add(e.Member);
             ulong greetingsChannelId = Properties.Settings.Default.GreetingsChannelId;
             await Greeting.Greet(greetingsChannelId, _client, _names.GetName(e.Member), _guildName);

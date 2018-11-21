@@ -9,11 +9,14 @@ using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Exceptions;
 using System.Threading;
+using log4net;
 
 namespace OpBot
 {
     internal class CommandProcessor : IDisposable
     {
+        static ILog log = LogManager.GetLogger(typeof(CommandProcessor));
+
         private readonly ulong _opBotUserId;
         private readonly NicknameList _names;
         private readonly OperationRepository _repository;
@@ -60,7 +63,7 @@ namespace OpBot
         {
             try
             {
-                e.Client.DebugLogger.LogMessage(LogLevel.Info, "OpBot", $"Executing: [{e.Message.Content}] for {e.Message.Author.Username}", DateTime.Now);
+                log.Info($"Executing: [{e.Message.Content}] for {e.Message.Author.Username}");
                 ParsedCommand cmd = new ParsedCommand(e, _defaultOperations[e.Message.Author.Id], _opBotUserId, _commandCharacters);
 
                 if (cmd.CommandParts.Length == 0)
@@ -291,9 +294,15 @@ namespace OpBot
                     await EndTwitterPoll();
             }
             if (e.Expired)
+            {
+                log.Info("Twitter: Poll timed out");
                 await SendError(e.Channel, "I have stopped monitoring twitter because it has taken too long for the tweet to happen.");
+            }
             else
+            {
+                log.Info("Twitter: Servers Available");
                 await e.Channel.SendMessageAsync($"{DiscordText.BigText("servers\navailable")}\nAccording to twitter it looks like the servers might be back up and running. Can't say for sure though, you meat-bags can be very imprecise in your tweets.");
+            }
         }
 
         private async Task SetOperationCommand(MessageCreateEventArgs e, ParsedCommand cmd)

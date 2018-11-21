@@ -52,6 +52,10 @@
       <HintPath>..\packages\DSharpPlus.WebSocket.WebSocket4Net.3.2.3\lib\net46\DSharpPlus.WebSocket.WebSocket4Net.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="log4net, Version=2.0.8.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
+      <HintPath>..\packages\log4net.2.0.8\lib\net45-full\log4net.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="NeoSmart.AsyncLock, Version=0.3.0.2, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\NeoSmart.AsyncLock.0.3.0.2\lib\net45\NeoSmart.AsyncLock.dll</HintPath>
       <Private>True</Private>
@@ -87,6 +91,7 @@
     <Compile Include="DefaultOperations.cs" />
     <Compile Include="DevTracker.cs" />
     <Compile Include="IReadOnlyOperation.cs" />
+    <Compile Include="Logging.cs" />
     <Compile Include="OperationException.cs" />
     <Compile Include="OperationUpdatedEventArgs.cs" />
     <Compile Include="ParsedCommand.cs" />

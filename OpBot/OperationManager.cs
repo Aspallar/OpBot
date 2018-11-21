@@ -1,4 +1,5 @@
-﻿using System;
+﻿using log4net;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,6 +10,8 @@ namespace OpBot
     [Serializable]
     internal class OperationManager
     {
+        private static ILog log = LogManager.GetLogger(typeof(OperationManager));
+
         public const int MaxOperations = 14;  // if more than this needed then guild needs a proper raid planner, not discord
 
         private Operation[] _operations = new Operation[MaxOperations];
@@ -39,9 +42,10 @@ namespace OpBot
             {
                 DateTime now = DateTime.Now.ToUniversalTime();
                 ulong messageId = 0;
+                int opIndex;
                 lock (this)
                 {
-                    int opIndex = Array.FindIndex(_operations, x => x != null && x.Date < now);
+                    opIndex = Array.FindIndex(_operations, x => x != null && x.Date < now);
                     if (opIndex != -1)
                     {
                         messageId = _operations[opIndex].MessageId;
@@ -53,6 +57,7 @@ namespace OpBot
                 {
                     delayLength = shortPeriod;
                     await _operationDeleted.InvokeAsync(new OperationDeletedEventArgs(messageId));
+                    log.Info($"Autoclosed operation [{opIndex}] [{messageId}]");
                 }
                 else
                 {

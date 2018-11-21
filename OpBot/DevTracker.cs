@@ -1,5 +1,4 @@
-﻿using DSharpPlus;
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using AngleSharp.Parser.Html;
 using System.Net;
@@ -9,11 +8,14 @@ using AngleSharp.Dom.Html;
 using System.Threading;
 using AngleSharp.Dom;
 using DSharpPlus.Entities;
+using log4net;
 
 namespace OpBot
 {
     internal class DevTracker : IDisposable
     {
+        private static ILog log = LogManager.GetLogger(typeof(DevTracker));
+
         private const string saveFileName = "devtracker.csv";
         private const string swtorUrlBase = "http://www.swtor.com/community/";
         private const string devTrackerUrl = swtorUrlBase + "devtracker.php";
@@ -58,6 +60,7 @@ namespace OpBot
 
         private async Task ProcessPosts()
         {
+            log.Debug("Polling DevTracker");
             IHtmlDocument document = await GetDocument();
 
             if (document == null)
@@ -90,6 +93,7 @@ namespace OpBot
                     Description = dates[1].TextContent.TrimEnd(),
                 };
 
+                log.Info($"New DevTracker [{embed.Title}]");
                 await _channel.SendMessageAsync("", embed: embed.Build());
 
                 if (k != 0)
@@ -127,7 +131,7 @@ namespace OpBot
                 }
                 catch (WebException ex)
                 {
-                    Console.WriteLine($"Warning: Unable to access dev tracker.\n{ex.ToString()}");
+                    log.Warn($"Unable to access dev tracker.\n{ex.ToString()}");
                 }
             }
             return document;

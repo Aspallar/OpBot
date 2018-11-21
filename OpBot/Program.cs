@@ -1,8 +1,8 @@
 ﻿using DSharpPlus;
-using DSharpPlus.Entities;
 using DSharpPlus.EventArgs;
 using DSharpPlus.Exceptions;
 using DSharpPlus.Net.WebSocket;
+using log4net;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,7 +11,24 @@ namespace OpBot
 {
     internal class Program
     {
-        static void Main(string[] args) => new Program().Run(args).GetAwaiter().GetResult();
+        private static ILog log = LogManager.GetLogger(typeof(Program));
+
+        static void Main(string[] args)
+        {
+            Logging.Configure("Logging.xml");
+#if !DEBUG
+            try
+            {
+#endif
+                new Program().Run(args).GetAwaiter().GetResult();
+#if !DEBUG
+            }
+            catch (Exception ex)
+            {
+                log.Fatal(ex.ToString());
+            }
+#endif            
+        }
 
         private DiscordClient _client;
         private NicknameList _names = new NicknameList();
@@ -24,7 +41,7 @@ namespace OpBot
 
         public async Task Run(string[] args)
         {
-            Console.WriteLine(OpBotUtils.GetVersionText());
+            log.Info($"OpBot {OpBotUtils.GetVersionText()}");
             OperationRepository operationRepository = new OperationRepository(Properties.Settings.Default.OperationFile);
             IAdminUser admins;
 
@@ -98,6 +115,7 @@ namespace OpBot
         {
             if (e.SpecialKey == ConsoleSpecialKey.ControlC)
             {
+                log.Info("Ctrl-C pressed, stopping Bot.");
                 e.Cancel = true;
                 _stopApplication.Cancel();
             }
@@ -105,6 +123,7 @@ namespace OpBot
 
         private Task Client_Ready(ReadyEventArgs e)
         {
+            log.Info("Client Ready");
             _botStatus.Start();
             return Task.CompletedTask;
         }
@@ -126,6 +145,7 @@ namespace OpBot
 
         private async Task Client_GuildAvailable(GuildCreateEventArgs e)
         {
+            log.Info($"{e.Guild.Name} guild available ({e.Guild.MemberCount} members)");
             _guildName = e.Guild.Name;
             _names.RemoveAll(x => true);
             _names.Add(e.Guild.Members);
@@ -136,6 +156,7 @@ namespace OpBot
 
         private async Task StartDevTracker()
         {
+            log.Info("Starting DevTracker");
             System.Diagnostics.Debug.Assert(_devTracker != null);
             ulong devTrackerChannelId = Properties.Settings.Default.devTrackerChannel;
             try
@@ -146,7 +167,7 @@ namespace OpBot
             {
                 _devTracker.Dispose();
                 _devTracker = null;
-                Console.WriteLine($"Warning: Cannot find devtracker channel {devTrackerChannelId}. Devtracker disabled.");
+                log.Error($"Cannot find devtracker channel {devTrackerChannelId}. Devtracker disabled.");
             }
         }
 

@@ -20,6 +20,7 @@ namespace OpBot
         private OperationManager _ops;
         private DevTracker _devTracker;
         private CancellationTokenSource _stopApplication;
+        private BotStatus _botStatus;
 
         public async Task Run(string[] args)
         {
@@ -46,7 +47,7 @@ namespace OpBot
             {
                 Token = Properties.Settings.Default.OpBotToken,
                 TokenType = TokenType.Bot,
-                LogLevel = LogLevel.Debug,
+                LogLevel = LogLevel.Info,
                 UseInternalLogHandler = true,
                 AutoReconnect = true,
             });
@@ -74,15 +75,12 @@ namespace OpBot
             _client.GuildMemberUpdated += Client_GuildMemberUpdated;
             _client.Ready += Client_Ready;
 
-            try
-            {
-                await _client.ConnectAsync();
-            }
-            catch (UnauthorizedException)
-            {
-                Console.WriteLine("Authorization Failure. OpBot is unable to log in.");
-                return;
-            }
+            _botStatus = new BotStatus(_client);
+
+            // this used to throw an UnauthorizedException when login failed, in DSharpPlus 3.2.3 it
+            // now throws System.Exception and even if it is caught the DSharpPlus is unstable and will
+            // crash out, so no point in catching it, only option is to let the app bomb out.
+            await _client.ConnectAsync();
 
             Console.CancelKeyPress += Console_CancelKeyPress;
             try { await Task.Delay(-1, _stopApplication.Token); } catch (TaskCanceledException) { }
@@ -105,23 +103,19 @@ namespace OpBot
             }
         }
 
-        private async Task Client_Ready(ReadyEventArgs e)
+        private Task Client_Ready(ReadyEventArgs e)
         {
-            await _client.UpdateStatusAsync(new DiscordGame("Star Wars: The Old Republic"));
+            _botStatus.Start();
+            return Task.CompletedTask;
         }
 
         private async Task Client_MessageCreated(MessageCreateEventArgs e)
         {
-            if (e.Message.Author.IsBot)
-                return;
-
-            if (e.Channel.Id != Properties.Settings.Default.OpBotChannel)
-                return;
-
-            if (_commandProcessor.IsCommand(e))
-                await _commandProcessor.Execute(e);
+            if (!e.Message.Author.IsBot
+                && e.Channel.Id == Properties.Settings.Default.OpBotChannel
+                && _commandProcessor.IsCommand(e))
+                    await _commandProcessor.Execute(e);
         }
-
 
         private async Task Client_GuildMemberAdded(GuildMemberAddEventArgs e)
         {
@@ -159,7 +153,7 @@ namespace OpBot
         private Task Client_GuildMemberUpdated(GuildMemberUpdateEventArgs e)
         {
             _names.Update(e.Member.Id, e.Member.Nickname);
-            return Task.Delay(0);
+            return Task.CompletedTask;
         }
 
     }

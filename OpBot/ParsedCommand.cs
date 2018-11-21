@@ -14,6 +14,7 @@ namespace OpBot
         public string[] CommandParts { get; private set; }
         public int OperationId { get; private set; }
         public bool IsPermanent { get; private set; }
+        public bool Quiet { get; private set; }
         public DiscordUser User { get; private set; }
 
         private static readonly Regex _mentionsRegex = new Regex(@"\<@!?\d+\>");
@@ -77,6 +78,12 @@ namespace OpBot
             if (part.StartsWith("-OP"))
             {
                 ParseOperation(part);
+                return;
+            }
+
+            if (part.StartsWith("-Q"))
+            {
+                Quiet = true;
                 return;
             }
 

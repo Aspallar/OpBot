@@ -82,6 +82,7 @@
     <Compile Include="AlertMembers.cs" />
     <Compile Include="AltRole.cs" />
     <Compile Include="AsyncEvent.cs" />
+    <Compile Include="BotStatus.cs" />
     <Compile Include="CommandParseException.cs" />
     <Compile Include="DefaultOperations.cs" />
     <Compile Include="DevTracker.cs" />

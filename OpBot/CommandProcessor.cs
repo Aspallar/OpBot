@@ -60,6 +60,7 @@ namespace OpBot
         {
             try
             {
+                e.Client.DebugLogger.LogMessage(LogLevel.Info, "OpBot", $"Executing: [{e.Message.Content}] for {e.Message.Author.Username}", DateTime.Now);
                 ParsedCommand cmd = new ParsedCommand(e, _defaultOperations[e.Message.Author.Id], _opBotUserId, _commandCharacters);
 
                 if (cmd.CommandParts.Length == 0)
@@ -122,7 +123,7 @@ namespace OpBot
                     }
                     else if (cmd.Command == "OFFLINE")
                     {
-                        await OfflineCommand(e, cmd.CommandParts);
+                        await OfflineCommand(e, cmd);
                     }
                     else if (cmd.Command == "BACK" || cmd.Command == "BK")
                     {
@@ -384,10 +385,12 @@ namespace OpBot
             await e.Channel.SendMessageAsync($"{DiscordText.BigText("I  AM  BACK")}\n\nI am back online and awaiting your commands.");
         }
 
-        private async Task OfflineCommand(MessageCreateEventArgs e, string[] commandParts)
+        private async Task OfflineCommand(MessageCreateEventArgs e, ParsedCommand cmd)
         {
             if (!CheckIsAdminUser(e, "OFFLINE"))
                 return;
+
+            string[] commandParts = cmd.CommandParts;
 
             string text;
             if (commandParts.Length == 1)
@@ -421,8 +424,11 @@ namespace OpBot
                 if (duration.Minutes > 0)
                     text += duration.Minutes.ToString() + " minutes ";
             }
-            string fullText = $"{DiscordText.BigText("offline")}\n\nI am going offline for a while.\n\n{text}\n\nLove you all {DiscordText.Kiss}";
-            await e.Channel.SendMessageAsync(fullText);
+            if (!cmd.Quiet)
+            {
+                string fullText = $"{DiscordText.BigText("offline")}\n\nI am going offline for a while.\n\n{text}\n\nLove you all {DiscordText.Kiss}";
+                await e.Channel.SendMessageAsync(fullText);
+            }
             _stopApplication.Cancel();
         }
 
@@ -791,8 +797,6 @@ namespace OpBot
 
         private async Task ShowInstructions(MessageCreateEventArgs e)
         {
-            await Task.CompletedTask;
-
             DiscordEmbedBuilder instructionEmbed = new DiscordEmbedBuilder()
             {
                 Color = new DiscordColor("ad1313"),

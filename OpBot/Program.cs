@@ -51,7 +51,7 @@ namespace OpBot
             }
             catch (FormatException)
             {
-                Console.WriteLine("There are invalid AdminUsers entries in config file.");
+                log.Fatal("There are invalid AdminUsers entries in config file.");
                 return;
             }
 
@@ -64,11 +64,13 @@ namespace OpBot
             {
                 Token = Properties.Settings.Default.OpBotToken,
                 TokenType = TokenType.Bot,
-                LogLevel = LogLevel.Info,
-                UseInternalLogHandler = true,
+                LogLevel = LogLevel.Debug,
+                UseInternalLogHandler = false,
                 AutoReconnect = true,
             });
             _client.SetWebSocketClient<WebSocket4NetClient>();
+            _client.ClientErrored += Client_ClientErrored;
+            _client.DebugLogger.LogMessageReceived += DebugLogger_LogMessageReceived;
 
             _stopApplication = new CancellationTokenSource();
 
@@ -109,6 +111,35 @@ namespace OpBot
             }
             await _client.DisconnectAsync();
             _client.Dispose();
+        }
+
+        private Task Client_ClientErrored(ClientErrorEventArgs e)
+        {
+            log.Error(e.Exception.ToString());
+            return Task.CompletedTask;
+        }
+
+        private void DebugLogger_LogMessageReceived(object sender, DebugLogMessageEventArgs e)
+        {
+            string message = "DSharpPlus: " + e.Message;
+            switch (e.Level)
+            {
+                case LogLevel.Critical:
+                    log.Fatal(message);
+                    break;
+                case LogLevel.Debug:
+                    log.Debug(message);
+                    break;
+                case LogLevel.Error:
+                    log.Error(message);
+                    break;
+                case LogLevel.Info:
+                    log.Info(message);
+                    break;
+                case LogLevel.Warning:
+                    log.Warn(message);
+                    break;
+            }
         }
 
         private void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)

@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Text.RegularExpressions;
 
 namespace OpBot
 {
@@ -52,6 +53,11 @@ namespace OpBot
                 }
             }
             return bigtext.ToString();
+        }
+
+        public static string CondenseRegionalIndicators(string text)
+        {
+            return Regex.Replace(text, ":regional_indicator_(.):", "$1", RegexOptions.Singleline);
         }
     }
 }

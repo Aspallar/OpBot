@@ -1,6 +1,6 @@
-﻿using DSharpPlus;
-using DSharpPlus.Entities;
+﻿using DSharpPlus.Entities;
 using DSharpPlus.Exceptions;
+using log4net;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -9,6 +9,7 @@ namespace OpBot
 {
     internal class MessageDeleter : IDisposable
     {
+        private static ILog log = LogManager.GetLogger(typeof(MessageDeleter));
         private SortedList<DateTime, DiscordMessage> _messageList;
         private Timer _timer;
 
@@ -59,6 +60,14 @@ namespace OpBot
                     try
                     {
                         await message.DeleteAsync();
+                        if (log.IsDebugEnabled)
+                        {
+                            string shortContents = DiscordText.CondenseRegionalIndicators(message.Content)
+                                .Substring(0, 64)
+                                .Replace("\n", "\\n")
+                                .Replace("\r", "");
+                            log.Debug($"Deleted [{message.Channel.Name}] [{message.Id}] [{shortContents}]");
+                        }
                     }
                     catch (NotFoundException)
                     {

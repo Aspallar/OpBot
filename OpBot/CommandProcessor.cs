@@ -671,12 +671,37 @@ namespace OpBot
 
         private async Task SignupCommand(MessageCreateEventArgs e, ParsedCommand cmd)
         {
+            if (cmd.CommandParts.Length > 1 && cmd.CommandParts[1].ToUpperInvariant() != "ALT")
+            {
+                await SendError(e, $"I do not understand {cmd.CommandParts[1]}. Did you mean ALT?");
+                return;
+            }
+
             string role = cmd.Command.StartsWith("HEAL") ? cmd.Command.Substring(0, 4) : cmd.Command;
 
             bool success = await _ops.Signup(cmd.OperationId, cmd.User.Id, _names.GetName(cmd.User), role);
 
-            if (!success)
+            if (success)
+            {
+                if (cmd.CommandParts.Length > 1)
+                {
+                    string [] altParts = cmd.CommandParts.Skip(1).ToArray();
+                    try
+                    {
+                        bool altSuccess = await _ops.SetOperationRoles(cmd.OperationId, _names.GetName(cmd.User), cmd.User.Id, altParts);
+                        if (!altSuccess)
+                            await SendOperationErrorMessage(e, cmd.OperationId);
+                    }
+                    catch (OpBotInvalidValueException ex)
+                    {
+                        await SendError(e, "You have been signed up but your alternate roles have not been set.\n" + ex.Message);
+                    }
+                }
+            }
+            else
+            {
                 await SendOperationErrorMessage(e, cmd.OperationId);
+            }
         }
 
         private async Task SendOperationErrorMessage(MessageCreateEventArgs e, int operationId)

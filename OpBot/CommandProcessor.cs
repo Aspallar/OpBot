@@ -721,6 +721,7 @@ namespace OpBot
                     Size = opParams.Size,
                     Mode = opParams.Mode,
                     Date = DateHelper.GetDateForNextOccuranceOfDay(opParams.Day) + opParams.Time,
+                    Side = opParams.Side,
                 };
                 newOperation.OperationName = opParams.OperationCode == "GF" ? GroupFinder.OperationOn(newOperation.Date) : opParams.OperationCode;
 
@@ -758,6 +759,7 @@ namespace OpBot
                 IReadOnlyOperation op = ops[k];
                 DiscordMessage newMessage = await e.Channel.SendMessageAsync(op.GetOperationMessageText());
                 ulong oldMessageId = _ops.UpdateMessageId(op.Id, newMessage.Id);
+                _repository.Save(_ops);
                 DiscordMessage oldMessage = await e.Channel.GetMessageAsync(oldMessageId);
                 try { await oldMessage.DeleteAsync(); } catch (NotFoundException) { }
                 await Task.Delay(250);

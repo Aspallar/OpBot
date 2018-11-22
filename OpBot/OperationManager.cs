@@ -163,6 +163,10 @@ namespace OpBot
                 {
                     op.Size = opParams.Size;
                 }
+                if (opParams.HasSide)
+                {
+                    op.Side = opParams.Side;
+                }
                 if (opParams.HasDay)
                 {
                     DateTime newDate = DateHelper.GetDateForNextOccuranceOfDay(opParams.Day);

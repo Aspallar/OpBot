@@ -9,6 +9,7 @@ namespace OpBot
         public string Day { get; private set; }
         public int Size { get; private set; }
         public string Mode { get; private set; }
+        public string Side { get; private set; }
 
         private TimeSpan _time;
         private bool _hasTime;
@@ -31,6 +32,7 @@ namespace OpBot
         public bool HasSize => Size != 0;
         public bool HasMode => !string.IsNullOrEmpty(Mode);
         public bool HasTime => _hasTime;
+        public bool HasSide => !string.IsNullOrEmpty(Side);
 
         private OperationParameters() { }
 
@@ -71,6 +73,14 @@ namespace OpBot
             else if (Operation.IsValidSize(part))
             {
                 opParams.Size = int.Parse(part);
+            }
+            else if ("IMPERIAL".StartsWith(part))
+            {
+                opParams.Side = "Imperial";
+            }
+            else if ("REPUBLIC".StartsWith(part))
+            {
+                opParams.Side = "Republic";
             }
             else
             {

@@ -17,6 +17,7 @@ namespace OpBot
         private ulong _messageId;
         private DateTime _date;
         private int _id;
+        private string _side;
 
         private static List<OperationDesc> _operationInfo = new List<OperationDesc>()
         {
@@ -55,6 +56,19 @@ namespace OpBot
             {
                 lock (this)
                     _id = value;
+            }
+        }
+
+        public string Side
+        {
+            get
+            {
+                return _side;
+            }
+            set
+            {
+                lock (this)
+                    _side = value;
             }
         }
 
@@ -225,7 +239,13 @@ namespace OpBot
             sb.Append("** ");
             sb.Append(Size);
             sb.Append("-man ");
-            sb.AppendLine(Mode);
+            sb.Append(Mode);
+            if (!string.IsNullOrEmpty(Side))
+            {
+                sb.Append(' ');
+                sb.Append(Side);
+            }
+            sb.AppendLine();
 
             sb.AppendLine(_date.ToString("dddd d MMMM yyyy HH:mm (UTC)"));
 

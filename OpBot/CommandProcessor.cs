@@ -10,6 +10,7 @@ using DSharpPlus.EventArgs;
 using DSharpPlus.Exceptions;
 using System.Threading;
 using log4net;
+using AngleSharp.Parser.Html;
 
 namespace OpBot
 {
@@ -160,6 +161,10 @@ namespace OpBot
                     {
                         await ListAlertsCommand(e, cmd);
                     }
+                    else if (cmd.Command == "STATUS")
+                    {
+                        await StatusCommand(e, cmd);
+                    }
                     else
                     {
                         await SendError(e, $"That is not a command that I recognize.");
@@ -171,6 +176,35 @@ namespace OpBot
                 await SendError(e, ex.Message);
             }
 
+        }
+
+        private async Task StatusCommand(MessageCreateEventArgs e, ParsedCommand cmd)
+        {
+            const int responseLifetime = 300000;
+            StringBuilder message = new StringBuilder("**Server Status**\n");
+            using (var client = new System.Net.WebClient())
+            {
+                string content = await client.DownloadStringTaskAsync("http://www.swtor.com/server-status");
+                var parser = new HtmlParser();
+                var doc = parser.Parse(content);
+                var statusRows = doc.QuerySelectorAll(".serverBody.row");
+                foreach (var row in statusRows)
+                {
+                    string status = row.GetAttribute("data-status");
+                    string name = row.QuerySelector("div.name").InnerHtml;
+                    message.Append(status == "UP" ? ":green_apple: " : ":apple: ");
+                    message.Append(name);
+                    message.Append(' ');
+                    message.AppendLine(status);
+                }
+            }
+            message.AppendLine("<https://www.swtor.com/server-status>");
+            message.AppendLine("<https://www.swtor.com/systemalerts>");
+            message.AppendLine("<https://twitter.com/SWTOR>");
+            message.AppendLine(GetSelfDestructText(responseLifetime));
+            DiscordMessage response = await e.Message.RespondAsync(message.ToString());
+            _messageDeleter.AddMessage(e.Message, 5000);
+            _messageDeleter.AddMessage(response, responseLifetime);
         }
 
         private async Task ListAlertsCommand(MessageCreateEventArgs e, ParsedCommand cmd)

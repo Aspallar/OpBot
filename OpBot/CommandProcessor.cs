@@ -201,10 +201,14 @@ namespace OpBot
             message.AppendLine("<https://www.swtor.com/server-status>");
             message.AppendLine("<https://www.swtor.com/systemalerts>");
             message.AppendLine("<https://twitter.com/SWTOR>");
-            message.AppendLine(GetSelfDestructText(responseLifetime));
+            if (!cmd.IsPermanent)
+                message.AppendLine(GetSelfDestructText(responseLifetime));
             DiscordMessage response = await e.Message.RespondAsync(message.ToString());
-            _messageDeleter.AddMessage(e.Message, 5000);
-            _messageDeleter.AddMessage(response, responseLifetime);
+            if (!cmd.IsPermanent)
+            {
+                _messageDeleter.AddMessage(e.Message, 5000);
+                _messageDeleter.AddMessage(response, responseLifetime);
+            }
         }
 
         private async Task ListAlertsCommand(MessageCreateEventArgs e, ParsedCommand cmd)

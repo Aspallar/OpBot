@@ -84,8 +84,6 @@ namespace OpBot
                 if (_processedPosts.Contains(key))
                     continue; // for k
 
-                isAtLeastOneNewPost = true;
-
                 DiscordEmbedBuilder embed = new DiscordEmbedBuilder()
                 {
                     Title = dates[0].TextContent.TrimStart().TrimEnd(_unwantedTitleEndings),
@@ -95,9 +93,19 @@ namespace OpBot
 
                 log.Info($"New DevTracker [{embed.Title}]");
                 await _channel.SendMessageAsync("", embed: embed.Build());
+                isAtLeastOneNewPost = true;
 
                 if (k != 0)
-                    await Task.Delay(5000);
+                {
+                    try
+                    {
+                        await Task.Delay(5000, _cancel);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        break; // for
+                    }
+                }
             }
             if (isAtLeastOneNewPost)
             {

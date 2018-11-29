@@ -38,6 +38,7 @@ namespace OpBot
         private DevTracker _devTracker;
         private CancellationTokenSource _stopApplication;
         private BotStatus _botStatus;
+        private Task _serverStatusPoll;
 
         public async Task Run(string[] args)
         {
@@ -95,7 +96,7 @@ namespace OpBot
             _client.Ready += Client_Ready;
 
             _botStatus = new BotStatus(_client);
-
+            
             // this used to throw an UnauthorizedException when login failed, in DSharpPlus 3.2.3 it
             // now throws System.Exception and even if it is caught the DSharpPlus is unstable and will
             // crash out, so no point in catching it, only option is to let the app bomb out.
@@ -103,6 +104,9 @@ namespace OpBot
 
             Console.CancelKeyPress += Console_CancelKeyPress;
             try { await Task.Delay(-1, _stopApplication.Token); } catch (TaskCanceledException) { }
+
+            if (_serverStatusPoll != null)
+                Task.WaitAll(_serverStatusPoll);
 
             if (_devTracker != null)
             {
@@ -152,11 +156,12 @@ namespace OpBot
             }
         }
 
-        private Task Client_Ready(ReadyEventArgs e)
+        private async Task Client_Ready(ReadyEventArgs e)
         {
             log.Info("Client Ready");
             _botStatus.Start();
-            return Task.CompletedTask;
+            _serverStatusPoll = new ServerStatusPoll(_stopApplication.Token)
+                .Start(await _client.GetChannelAsync(Properties.Settings.Default.OpBotChannel));
         }
 
         private async Task Client_MessageCreated(MessageCreateEventArgs e)

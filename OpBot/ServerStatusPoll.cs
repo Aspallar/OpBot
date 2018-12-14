@@ -44,7 +44,9 @@ namespace OpBot
                     {
                         _cancel.ThrowIfCancellationRequested();
                         await PollServer(client);
+                        log.Debug("Status wait start");
                         await Task.Delay(pollPeriod, _cancel);
+                        log.Debug("Status wait end");
                     }
                 }
             }
